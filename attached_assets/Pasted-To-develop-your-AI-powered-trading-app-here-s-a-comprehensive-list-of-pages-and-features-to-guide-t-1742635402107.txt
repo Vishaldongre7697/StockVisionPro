@@ -1,0 +1,53 @@
+To develop your AI-powered trading app, here's a comprehensive list of pages and features to guide the AI agent in building the application:
+
+**1. Authentication:**
+   - **Login Page:** Secure user authentication with options for email/password and third-party integrations.
+   - **Registration Page:** User sign-up with necessary validations.
+   - **Password Recovery:** Functionality to reset forgotten passwords.
+
+**2. Main Navigation:**
+   - **Bottom Navigation Bar:** Fixed navigation with tabs for Home, Watchlist, AI Suggestions, Predictions, and Settings.
+   - **Floating Chat Icon:** Accessible Suhu AI chat support from any screen.
+
+**3. Home Page:**
+   - **User Profile Access:** Profile icon leading to account details and settings.
+   - **Market Overview:** AI-generated summaries of current market conditions.
+   - **Add Stock/Index:** Buttons to add stocks or indices to the watchlist.
+   - **Stock Insights:** Detailed information including FII/DII data, block deals, volume analysis, and AI confidence scores.
+
+**4. Watchlist:**
+   - **Customizable List:** Track selected stocks with real-time updates.
+   - **Notifications Panel:** Market updates and AI signals.
+   - **Mini-Charts:** Quick visual analysis of each stock.
+   - **Expandable Stock Cards:** Detailed fundamental data, support/resistance levels, 52-week range, and recent news.
+
+**5. AI Suggestions:**
+   - **Personalized Recommendations:** AI-driven buy, sell, or hold suggestions based on institutional activity and trading volume.
+
+**6. Predictions:**
+   - **Interactive Charts:** Real-time candlestick and line charts with AI-predicted trends, buy/sell indicators, and stop-loss markers.
+   - **Trade Parameters:** Information on stop loss, target price, and entry/exit points.
+   - **Profit Calculator:** Estimate potential returns.
+   - **Technical/Fundamental Data:** Comprehensive analysis to support trading decisions.
+
+**7. Automated Trading:**
+   - **Trading Dashboard:** Monitor portfolio performance, win rates, and P&L statements.
+   - **Strategy Maker:** Develop, backtest, and optimize custom trading strategies.
+   - **Trade Signals:** Automated alerts based on predefined strategies.
+
+**8. User Profile and Settings:**
+   - **Profile Management:** View and edit personal information.
+   - **App Preferences:** Customize settings, manage notifications, and configure other preferences.
+   - **Privacy Policy:** Access and review the app's privacy guidelines.
+   - **Logout:** Securely exit the application.
+
+**9. Suhu AI Chat:**
+   - **Chat Interface:** Engage with Suhu AI for support, market insights, and personalized assistance.
+   - **Knowledge Base:** Access FAQs and educational resources.
+
+**10. Additional Features:**
+   - **Trending Stocks Widget:** Display top trending stocks with details like name, current price, percentage change, trading volume, and sentiment score.
+   - **Notifications Center:** Centralized hub for all alerts and updates.
+   - **Search Functionality:** Quickly find stocks, news, or features within the app.
+
+This structured outline ensures that the AI agent has a clear roadmap to develop a feature-rich trading application tailored to your specifications. 
