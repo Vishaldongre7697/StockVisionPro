@@ -15,8 +15,8 @@ import { ThemeProvider } from "./lib/themeContext";
 import { Layout } from "@/components/Layout";
 
 // New pages based on the UI/UX specifications
-import SuhuAI from "@/pages/SuhuAI";
-import Algotrade from "@/pages/Algotrade";
+import SuhuAI from "./pages/SuhuAI";
+import Algotrade from "./pages/Algotrade";
 
 function Router() {
   return (

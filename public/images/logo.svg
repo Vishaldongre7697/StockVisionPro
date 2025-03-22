@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer Circle -->
+  <path d="M200 370C294.934 370 370 294.934 370 200C370 105.066 294.934 30 200 30C105.066 30 30 105.066 30 200C30 294.934 105.066 370 200 370Z" stroke="#1E3A5F" stroke-width="25" stroke-linecap="round" stroke-dasharray="360,400"/>
+  
+  <!-- Teal Arc -->
+  <path d="M110 330C130 350 163 365 200 365C260 365 312 330 338 278" stroke="#20B2AA" stroke-width="18" stroke-linecap="round"/>
+  
+  <!-- Head Silhouette -->
+  <path d="M280 200C280 160 250 130 200 130C150 130 120 170 120 200C120 230 130 260 140 280C150 300 170 315 190 315C210 315 220 300 220 290C220 280 200 270 200 250C200 230 230 240 240 220C250 200 235 180 220 180" stroke="#1E3A5F" stroke-width="12" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+  
+  <!-- Brain -->
+  <path d="M180 155C180 145 190 135 200 135C210 135 220 145 220 155C220 165 210 170 200 170C190 170 180 165 180 155Z" fill="#20B2AA"/>
+  <path d="M180 155C180 145 190 135 200 135C210 135 220 145 220 155C220 165 210 170 200 170C190 170 180 165 180 155Z" stroke="#20B2AA" stroke-width="8" stroke-linecap="round"/>
+  <path d="M185 165C185 175 195 185 200 182C205 179 215 175 215 165" stroke="#20B2AA" stroke-width="8" stroke-linecap="round"/>
+  <path d="M190 180C190 190 210 190 210 180" stroke="#20B2AA" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Chart Lines Top -->
+  <path d="M300 80L320 60L345 85L360 70" stroke="#1E3A5F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="360" cy="70" r="8" fill="#20B2AA"/>
+  <circle cx="320" cy="60" r="8" fill="#20B2AA"/>
+  <circle cx="345" cy="85" r="6" fill="#20B2AA"/>
+  
+  <!-- Chart Lines Bottom -->
+  <path d="M100 320L80 300L60 330L40 310" stroke="#1E3A5F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="40" cy="310" r="8" fill="#20B2AA"/>
+  <circle cx="80" cy="300" r="8" fill="#20B2AA"/>
+  <circle cx="60" cy="330" r="6" fill="#20B2AA"/>
+</svg>
