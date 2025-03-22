@@ -10,17 +10,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/lib/themeContext";
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
+  const { theme } = useTheme();
 
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-background border-b border-border shadow-sm">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
           <Link href="/">
-            <a className="mr-2 font-bold text-primary text-xl">
-              Suhu<span className="text-blue-500">AI</span>
+            <a className="flex items-center">
+              {/* Logo */}
+              <div className="mr-2 h-8 w-8">
+                <img src="/images/logo.svg" alt="StockVisionPro Logo" className="h-full w-full" />
+              </div>
+              <span className="font-bold text-xl">
+                Stock<span className="text-primary">Vision</span>Pro
+              </span>
             </a>
           </Link>
         </div>
