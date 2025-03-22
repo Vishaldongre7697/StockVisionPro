@@ -11,18 +11,62 @@ import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import { AuthProvider } from "./lib/auth.tsx";
+import { ThemeProvider } from "./lib/themeContext";
+import { Layout } from "@/components/Layout";
+
+// New pages based on the UI/UX specifications
+import SuhuAI from "@/pages/SuhuAI";
+import Algotrade from "@/pages/Algotrade";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/watchlist" component={Watchlist} />
-      <Route path="/predictions" component={Predictions} />
-      <Route path="/ai-insights" component={AIInsights} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route component={NotFound} />
+      <Route path="/login">
+        <Login />
+      </Route>
+      <Route path="/register">
+        <Register />
+      </Route>
+      
+      <Route path="/">
+        <Layout>
+          <Home />
+        </Layout>
+      </Route>
+      <Route path="/watchlist">
+        <Layout title="Watchlist">
+          <Watchlist />
+        </Layout>
+      </Route>
+      <Route path="/predictions">
+        <Layout title="Predictions">
+          <Predictions />
+        </Layout>
+      </Route>
+      <Route path="/ai-insights">
+        <Layout title="AI Insights">
+          <AIInsights />
+        </Layout>
+      </Route>
+      <Route path="/algotrade">
+        <Layout title="Algotrade">
+          <Algotrade />
+        </Layout>
+      </Route>
+      <Route path="/settings">
+        <Layout title="Settings" showBackButton>
+          <Settings />
+        </Layout>
+      </Route>
+      <Route path="/suhu-ai">
+        <Layout title="SuhuAI Assistant" showBackButton>
+          <SuhuAI />
+        </Layout>
+      </Route>
+      
+      <Route>
+        <NotFound />
+      </Route>
     </Switch>
   );
 }
@@ -30,10 +74,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <Toaster />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router />
+          <Toaster />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
