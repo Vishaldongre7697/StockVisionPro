@@ -10,4 +10,66 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  :root {
+    --suhu-floating-btn: #4F46E5;
+  }
+}
+
+@layer components {
+  /* Custom common components */
+  .stock-card {
+    @apply p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200 mb-3;
+  }
+
+  .stock-up {
+    @apply text-green-600 dark:text-green-400 font-medium;
+  }
+
+  .stock-down {
+    @apply text-red-600 dark:text-red-400 font-medium;
+  }
+
+  .signal-buy {
+    @apply bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full;
+  }
+
+  .signal-sell {
+    @apply bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full;
+  }
+
+  .signal-hold {
+    @apply bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full;
+  }
+
+  /* Navigation and layout */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-around items-center p-2 z-50;
+  }
+
+  .bottom-nav-item {
+    @apply flex flex-col items-center justify-center py-1 px-2 rounded-lg;
+  }
+
+  .bottom-nav-item.active {
+    @apply bg-gray-100 dark:bg-gray-800 text-primary;
+  }
+
+  .floating-suhu-btn {
+    @apply fixed bottom-20 right-4 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg z-50 animate-pulse hover:animate-none;
+  }
+
+  /* Charts and data displays */
+  .chart-container {
+    @apply rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-4;
+  }
+
+  /* Theme toggle */
+  .theme-toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .theme-toggle-thumb {
+    @apply pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0;
+  }
 }
