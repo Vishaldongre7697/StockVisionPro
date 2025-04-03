@@ -1,157 +1,189 @@
-from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any, Union
+"""
+Data models for StockVisionPro API
+"""
+
 from datetime import datetime
-from enum import Enum, auto
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List, Dict, Any, Union
 
-# Enumerations
-class StockSentiment(str, Enum):
-    VERY_BULLISH = "Very Bullish"
-    BULLISH = "Bullish"
-    NEUTRAL = "Neutral"
-    BEARISH = "Bearish"
-    VERY_BEARISH = "Very Bearish"
 
-class SuggestionType(str, Enum):
-    BUY = "BUY"
-    SELL = "SELL"
-    HOLD = "HOLD"
-    WATCH = "WATCH"
-
-class TransactionType(str, Enum):
-    BUY = "BUY"
-    SELL = "SELL"
-
-class TransactionStatus(str, Enum):
-    PENDING = "PENDING"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-
-class NotificationType(str, Enum):
-    PRICE_ALERT = "PRICE_ALERT"
-    STRATEGY_ALERT = "STRATEGY_ALERT"
-    AI_SUGGESTION = "AI_SUGGESTION"
-    SYSTEM = "SYSTEM"
-
-class TimeFrame(str, Enum):
-    SHORT_TERM = "SHORT_TERM"
-    MEDIUM_TERM = "MEDIUM_TERM"
-    LONG_TERM = "LONG_TERM"
-
-# Model Schemas
 class User(BaseModel):
-    id: int
+    """User model for authentication and profile"""
+    id: str
     username: str
-    password: str
     email: str
-    fullName: Optional[str] = None
-    profileImage: Optional[str] = None
-    phoneNumber: Optional[str] = None
-    preferences: Optional[Dict[str, Any]] = None
-    accountBalance: float = 0.0
+    password: Optional[str] = None
+    fullName: str
+    accountBalance: float = 10000.0  # Default starting balance
+    lastLogin: Optional[datetime] = None
+    isActive: bool = True
+    preferences: Dict[str, Any] = {}
     createdAt: datetime = Field(default_factory=datetime.now)
-    lastLoginAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: Optional[datetime] = None
+
 
 class Stock(BaseModel):
-    id: int
+    """Stock model for market data"""
+    id: str
     symbol: str
     name: str
-    exchange: str
     currentPrice: float
+    dailyChange: float
+    dailyChangePercent: float
+    open: float
+    high: float
+    low: float
     previousClose: float
-    change: Optional[float] = None
-    changePercent: Optional[float] = None
-    volume: Optional[int] = None
+    volume: int
     marketCap: Optional[float] = None
-    dayHigh: Optional[float] = None
-    dayLow: Optional[float] = None
-    fiftyTwoWeekHigh: Optional[float] = None
-    fiftyTwoWeekLow: Optional[float] = None
-    pe: Optional[float] = None
-    eps: Optional[float] = None
-    dividend: Optional[float] = None
+    peRatio: Optional[float] = None
+    dividendYield: Optional[float] = None
     sector: Optional[str] = None
-    industry: Optional[str] = None
+    exchange: str
     description: Optional[str] = None
     updatedAt: datetime = Field(default_factory=datetime.now)
 
-class StockHistoricalData(BaseModel):
-    id: int
-    stockId: int
+
+class AIRecommendation(BaseModel):
+    """AI-generated stock recommendation model"""
+    id: str
+    stockId: str
+    type: str  # BUY, SELL, HOLD
+    confidence: float  # 0-100 score
+    sentiment: str  # BULLISH, BEARISH, NEUTRAL
+    priceTarget: Optional[float] = None
+    timeFrame: str  # SHORT_TERM, MEDIUM_TERM, LONG_TERM
+    analysis: str
+    createdAt: datetime = Field(default_factory=datetime.now)
+
+
+class HistoricalData(BaseModel):
+    """Historical stock price data model"""
+    id: str
+    stockId: str
     date: datetime
     open: float
     high: float
     low: float
     close: float
     volume: int
-    adjustedClose: Optional[float] = None
+
 
 class Watchlist(BaseModel):
-    id: int
-    userId: int
-    stockId: int
-    addedAt: datetime = Field(default_factory=datetime.now)
+    """User watchlist item model"""
+    id: str
+    userId: str
+    stockId: str
     alertPrice: Optional[float] = None
-    alertCondition: Optional[str] = None  # "above", "below"
+    alertCondition: Optional[str] = None  # ABOVE, BELOW
+    notes: Optional[str] = None
+    createdAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: Optional[datetime] = None
 
-class TradingStrategy(BaseModel):
-    id: int
-    userId: int
+
+class Portfolio(BaseModel):
+    """User portfolio item model"""
+    id: str
+    userId: str
+    stockId: str
+    quantity: float
+    averageBuyPrice: float
+    notes: Optional[str] = None
+    createdAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: Optional[datetime] = None
+
+
+class Strategy(BaseModel):
+    """Trading strategy model"""
+    id: str
+    userId: str
     name: str
     description: Optional[str] = None
-    conditions: Dict[str, Any]  # JSON object with strategy conditions
-    actions: Dict[str, Any]     # JSON object with strategy actions
-    isActive: bool = False
-    backtestResults: Optional[Dict[str, Any]] = None
+    indicators: List[Dict[str, Any]] = []
+    entryConditions: List[Dict[str, Any]] = []
+    exitConditions: List[Dict[str, Any]] = []
+    riskManagement: Dict[str, Any] = {}
+    status: str = "INACTIVE"  # ACTIVE, INACTIVE, PAUSED
+    targetStocks: List[str] = []  # List of stock IDs
+    performanceMetrics: Dict[str, Any] = {}
     createdAt: datetime = Field(default_factory=datetime.now)
-    updatedAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: Optional[datetime] = None
+
 
 class Transaction(BaseModel):
-    id: int
-    userId: int
-    stockId: int
-    type: str  # TransactionType
+    """Transaction model for portfolio changes"""
+    id: str
+    userId: str
+    stockId: str
+    type: str  # BUY, SELL
     quantity: float
     price: float
     totalAmount: float
-    status: str  # TransactionStatus
-    strategyId: Optional[int] = None
+    status: str  # PENDING, COMPLETED, FAILED
+    notes: Optional[str] = None
     createdAt: datetime = Field(default_factory=datetime.now)
     completedAt: Optional[datetime] = None
 
-class Portfolio(BaseModel):
-    userId: int
-    stockId: int
-    quantity: float
-    averageBuyPrice: float
-    updatedAt: datetime = Field(default_factory=datetime.now)
-
-class AiSuggestion(BaseModel):
-    id: int
-    stockId: int
-    suggestion: str  # SuggestionType
-    targetPrice: Optional[float] = None
-    stopLoss: Optional[float] = None
-    confidence: Optional[float] = None  # 0-100
-    rationale: Optional[str] = None
-    timeframe: Optional[str] = None  # TimeFrame
-    createdAt: datetime = Field(default_factory=datetime.now)
-    expiresAt: datetime
 
 class Notification(BaseModel):
-    id: int
-    userId: int
-    type: str  # NotificationType
+    """User notification model"""
+    id: str
+    userId: str
     title: str
     message: str
+    type: str  # ALERT, SYSTEM, STRATEGY
+    relatedEntityId: Optional[str] = None  # stockId, strategyId, etc.
     isRead: bool = False
-    relatedEntityType: Optional[str] = None  # "stock", "strategy", "transaction"
-    relatedEntityId: Optional[int] = None
     createdAt: datetime = Field(default_factory=datetime.now)
+    readAt: Optional[datetime] = None
+
 
 class ChatMessage(BaseModel):
-    id: int
-    userId: int
-    sender: str  # "USER" or "AI"
+    """Chat message model for SuhuAI assistant"""
+    id: str
+    userId: str
     message: str
-    context: Optional[Dict[str, Any]] = None
+    response: Optional[str] = None
+    context: Dict[str, Any] = {}
     createdAt: datetime = Field(default_factory=datetime.now)
+    respondedAt: Optional[datetime] = None
+
+
+# Login related models
+class LoginRequest(BaseModel):
+    """Login request data model"""
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    """Login response data model"""
+    token: str
+    user: User
+
+
+class RegisterRequest(BaseModel):
+    """Register request data model"""
+    username: str
+    email: str 
+    password: str
+    fullName: str
+
+
+# Request validation models
+class WatchlistRequest(BaseModel):
+    """Watchlist item request model"""
+    userId: str
+    stockId: str
+    alertPrice: Optional[float] = None
+    alertCondition: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class PortfolioRequest(BaseModel):
+    """Portfolio item request model"""
+    userId: str
+    stockId: str
+    quantity: float
+    averageBuyPrice: float
+    notes: Optional[str] = None

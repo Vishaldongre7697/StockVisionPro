@@ -1,1 +1,3 @@
-# This file makes the data directory a Python package
+"""
+Data services package for StockVisionPro API
+"""

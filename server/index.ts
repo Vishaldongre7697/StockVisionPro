@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import { createServer } from 'http';
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
@@ -37,7 +38,17 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  // Create HTTP server
+  const server = createServer(app);
+
+  // Set up proxy to Python Flask backend
+  const apiProxy = createProxyMiddleware({
+    target: 'http://localhost:5001',
+    changeOrigin: true,
+  });
+
+  // Use proxy middleware for /api routes
+  app.use('/api', apiProxy);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

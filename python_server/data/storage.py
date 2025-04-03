@@ -1,902 +1,1131 @@
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple, Union
-import json
-import random
-from models.schemas import User, Stock, StockHistoricalData, Watchlist, TradingStrategy
-from models.schemas import Transaction, Portfolio, AiSuggestion, Notification, ChatMessage
-from models.schemas import StockSentiment, SuggestionType, TransactionType, TransactionStatus, NotificationType, TimeFrame
+"""
+In-memory storage implementation for StockVisionPro API
+"""
+
+import logging
+import uuid
+from datetime import datetime
+from typing import Dict, List, Optional, Any, Union
+
+from models.schemas import (
+    User, Stock, AIRecommendation, HistoricalData, 
+    Watchlist, Portfolio, Strategy, Transaction, 
+    Notification, ChatMessage
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
 
 class MemStorage:
+    """In-memory storage implementation for StockVisionPro API"""
+    
     def __init__(self):
-        # Storage maps
-        self.users: Dict[int, User] = {}
-        self.stocks: Dict[int, Stock] = {}
-        self.stock_historical_data: Dict[int, StockHistoricalData] = {}
-        self.watchlists: Dict[int, Watchlist] = {}
-        self.trading_strategies: Dict[int, TradingStrategy] = {}
-        self.transactions: Dict[int, Transaction] = {}
-        self.portfolio_items: Dict[str, Portfolio] = {}  # key: f"{userId}:{stockId}"
-        self.ai_suggestions: Dict[int, AiSuggestion] = {}
-        self.notifications: Dict[int, Notification] = {}
-        self.chat_messages: Dict[int, ChatMessage] = {}
+        """Initialize storage with empty collections"""
+        # Main data collections
+        self.users: List[User] = []
+        self.stocks: List[Stock] = []
+        self.ai_recommendations: List[AIRecommendation] = []
+        self.historical_data: List[HistoricalData] = []
+        self.watchlists: List[Watchlist] = []
+        self.portfolios: List[Portfolio] = []
+        self.strategies: List[Strategy] = []
+        self.transactions: List[Transaction] = []
+        self.notifications: List[Notification] = []
+        self.chat_messages: List[ChatMessage] = []
         
-        # ID counters
-        self.user_id_counter = 1
-        self.stock_id_counter = 1
-        self.historical_data_id_counter = 1
-        self.watchlist_id_counter = 1
-        self.strategy_id_counter = 1
-        self.transaction_id_counter = 1
-        self.ai_suggestion_id_counter = 1
-        self.notification_id_counter = 1
-        self.chat_message_id_counter = 1
-        
-        # Initialize demo data
-        self._initialize_data()
+        # Initialize with sample data
+        self._initialize_sample_data()
     
-    def _initialize_data(self):
-        # Initialize stocks
-        self._initialize_stocks()
+    def _initialize_sample_data(self):
+        """Initialize with sample data for development"""
+        # Sample users
+        self.users = [
+            User(
+                id="user1",
+                username="johnsmith",
+                email="john@example.com",
+                password="$2b$12$4Hl8/4.AAd8HlsOiCHRfJuDG3g5qLJgR3l8x9ePXxetBYVuqKPHSK",  # hashed "password123"
+                fullName="John Smith",
+                accountBalance=10000.0
+            ),
+            User(
+                id="user2",
+                username="janesmith",
+                email="jane@example.com",
+                password="$2b$12$4Hl8/4.AAd8HlsOiCHRfJuDG3g5qLJgR3l8x9ePXxetBYVuqKPHSK",  # hashed "password123"
+                fullName="Jane Smith",
+                accountBalance=15000.0
+            )
+        ]
         
-        # Initialize some historical data
-        self._initialize_historical_data()
+        # Sample stocks
+        self.stocks = [
+            Stock(
+                id="stock1",
+                symbol="AAPL",
+                name="Apple Inc.",
+                currentPrice=170.50,
+                dailyChange=1.75,
+                dailyChangePercent=1.04,
+                open=168.75,
+                high=171.25,
+                low=168.50,
+                previousClose=168.75,
+                volume=75000000,
+                marketCap=2800000000000,
+                peRatio=27.5,
+                dividendYield=0.56,
+                sector="Technology",
+                exchange="NASDAQ",
+                description="Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide."
+            ),
+            Stock(
+                id="stock2",
+                symbol="MSFT",
+                name="Microsoft Corporation",
+                currentPrice=320.10,
+                dailyChange=-2.30,
+                dailyChangePercent=-0.71,
+                open=322.40,
+                high=323.15,
+                low=319.80,
+                previousClose=322.40,
+                volume=25000000,
+                marketCap=2400000000000,
+                peRatio=34.2,
+                dividendYield=0.75,
+                sector="Technology",
+                exchange="NASDAQ",
+                description="Microsoft Corporation develops, licenses, and supports software, services, devices, and solutions worldwide."
+            ),
+            Stock(
+                id="stock3",
+                symbol="GOOGL",
+                name="Alphabet Inc.",
+                currentPrice=142.50,
+                dailyChange=0.75,
+                dailyChangePercent=0.53,
+                open=141.75,
+                high=143.00,
+                low=141.50,
+                previousClose=141.75,
+                volume=18000000,
+                marketCap=1900000000000,
+                peRatio=25.6,
+                dividendYield=None,
+                sector="Technology",
+                exchange="NASDAQ",
+                description="Alphabet Inc. offers various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Latin America."
+            ),
+            Stock(
+                id="stock4",
+                symbol="AMZN",
+                name="Amazon.com, Inc.",
+                currentPrice=175.25,
+                dailyChange=3.45,
+                dailyChangePercent=2.01,
+                open=171.80,
+                high=176.20,
+                low=171.50,
+                previousClose=171.80,
+                volume=30000000,
+                marketCap=1800000000000,
+                peRatio=62.8,
+                dividendYield=None,
+                sector="Consumer Cyclical",
+                exchange="NASDAQ",
+                description="Amazon.com, Inc. engages in the retail sale of consumer products and subscriptions in North America and internationally."
+            ),
+            Stock(
+                id="stock5",
+                symbol="TSLA",
+                name="Tesla, Inc.",
+                currentPrice=240.75,
+                dailyChange=-4.25,
+                dailyChangePercent=-1.73,
+                open=245.00,
+                high=247.50,
+                low=240.00,
+                previousClose=245.00,
+                volume=80000000,
+                marketCap=780000000000,
+                peRatio=69.7,
+                dividendYield=None,
+                sector="Automotive",
+                exchange="NASDAQ",
+                description="Tesla, Inc. designs, develops, manufactures, leases, and sells electric vehicles, and energy generation and storage systems."
+            )
+        ]
         
-        # Create a demo user
-        self.create_user({
-            "username": "demo",
-            "password": "password",
-            "email": "demo@example.com",
-            "fullName": "Demo User",
-            "accountBalance": 1000000.0  # 10 Lakhs
-        })
+        # Sample AI recommendations
+        self.ai_recommendations = [
+            AIRecommendation(
+                id="rec1",
+                stockId="stock1",
+                type="BUY",
+                confidence=85.5,
+                sentiment="BULLISH",
+                priceTarget=190.00,
+                timeFrame="MEDIUM_TERM",
+                analysis="Apple's strong product lineup and services growth suggest continued momentum."
+            ),
+            AIRecommendation(
+                id="rec2",
+                stockId="stock2",
+                type="HOLD",
+                confidence=65.0,
+                sentiment="NEUTRAL",
+                priceTarget=325.00,
+                timeFrame="SHORT_TERM",
+                analysis="Microsoft is fairly valued at current levels, but cloud business remains strong."
+            ),
+            AIRecommendation(
+                id="rec3",
+                stockId="stock3",
+                type="BUY",
+                confidence=78.5,
+                sentiment="BULLISH",
+                priceTarget=155.00,
+                timeFrame="LONG_TERM",
+                analysis="Google's ad business is resilient and AI investments will drive future growth."
+            ),
+            AIRecommendation(
+                id="rec4",
+                stockId="stock4",
+                type="BUY",
+                confidence=82.0,
+                sentiment="BULLISH",
+                priceTarget=195.00,
+                timeFrame="MEDIUM_TERM",
+                analysis="Amazon's e-commerce and AWS growth continue to exceed expectations."
+            ),
+            AIRecommendation(
+                id="rec5",
+                stockId="stock5",
+                type="SELL",
+                confidence=70.5,
+                sentiment="BEARISH",
+                priceTarget=210.00,
+                timeFrame="SHORT_TERM",
+                analysis="Tesla faces increasing competition and margins are under pressure."
+            )
+        ]
         
-        # Create some AI suggestions
-        for stock_id in range(1, 6):
-            stock = self.get_stock(stock_id)
-            if stock:
-                suggestion_type = random.choice(list(SuggestionType))
-                target_multiplier = 1.15 if suggestion_type == SuggestionType.BUY else 0.85
-                stop_multiplier = 0.90 if suggestion_type == SuggestionType.BUY else 1.10
-                
-                self.create_ai_suggestion({
-                    "stockId": stock_id,
-                    "suggestion": suggestion_type,
-                    "targetPrice": stock.currentPrice * target_multiplier,
-                    "stopLoss": stock.currentPrice * stop_multiplier,
-                    "confidence": random.uniform(60, 95),
-                    "rationale": f"Based on technical analysis and recent market trends, this stock shows {suggestion_type.lower()} signals.",
-                    "timeframe": random.choice(list(TimeFrame))
-                })
-    
-    def _initialize_stocks(self):
-        # Market indices
-        self.create_stock({
-            "symbol": "NIFTY",
-            "name": "Nifty 50",
-            "exchange": "NSE",
-            "currentPrice": 22100.50,
-            "previousClose": 22050.75,
-            "change": 49.75,
-            "changePercent": 0.23,
-            "volume": 1234567890,
-            "marketCap": 0,
-            "sector": "Index"
-        })
-        
-        self.create_stock({
-            "symbol": "SENSEX",
-            "name": "BSE Sensex",
-            "exchange": "BSE",
-            "currentPrice": 72300.25,
-            "previousClose": 72100.50,
-            "change": 199.75,
-            "changePercent": 0.28,
-            "volume": 987654321,
-            "marketCap": 0,
-            "sector": "Index"
-        })
-        
-        # Top stocks
-        self.create_stock({
-            "symbol": "RELIANCE",
-            "name": "Reliance Industries",
-            "exchange": "NSE",
-            "currentPrice": 2456.75,
-            "previousClose": 2445.60,
-            "change": 11.15,
-            "changePercent": 0.46,
-            "volume": 8765432,
-            "marketCap": 16545345000000,
-            "dayHigh": 2470.00,
-            "dayLow": 2432.50,
-            "sector": "Energy",
-            "pe": 32.6,
-            "eps": 75.34,
-            "dividend": 1.2
-        })
-        
-        self.create_stock({
-            "symbol": "TCS",
-            "name": "Tata Consultancy Services",
-            "exchange": "NSE",
-            "currentPrice": 3456.80,
-            "previousClose": 3467.25,
-            "change": -10.45,
-            "changePercent": -0.30,
-            "volume": 1245678,
-            "marketCap": 12634567000000,
-            "dayHigh": 3478.90,
-            "dayLow": 3445.00,
-            "sector": "Technology",
-            "pe": 27.8,
-            "eps": 124.35,
-            "dividend": 2.8
-        })
-        
-        self.create_stock({
-            "symbol": "HDFCBANK",
-            "name": "HDFC Bank",
-            "exchange": "NSE",
-            "currentPrice": 1578.45,
-            "previousClose": 1570.30,
-            "change": 8.15,
-            "changePercent": 0.52,
-            "volume": 5643789,
-            "marketCap": 8763421000000,
-            "dayHigh": 1585.00,
-            "dayLow": 1565.25,
-            "sector": "Finance",
-            "pe": 18.9,
-            "eps": 83.51,
-            "dividend": 3.5
-        })
-        
-        self.create_stock({
-            "symbol": "INFY",
-            "name": "Infosys",
-            "exchange": "NSE",
-            "currentPrice": 1482.35,
-            "previousClose": 1475.60,
-            "change": 6.75,
-            "changePercent": 0.46,
-            "volume": 3452987,
-            "marketCap": 6143785000000,
-            "dayHigh": 1490.00,
-            "dayLow": 1472.80,
-            "sector": "Technology",
-            "pe": 24.6,
-            "eps": 60.26,
-            "dividend": 2.3
-        })
-        
-        self.create_stock({
-            "symbol": "WIPRO",
-            "name": "Wipro",
-            "exchange": "NSE",
-            "currentPrice": 452.65,
-            "previousClose": 450.80,
-            "change": 1.85,
-            "changePercent": 0.41,
-            "volume": 2431678,
-            "marketCap": 2476543000000,
-            "dayHigh": 455.20,
-            "dayLow": 448.90,
-            "sector": "Technology",
-            "pe": 19.8,
-            "eps": 22.86,
-            "dividend": 1.5
-        })
-    
-    def _initialize_historical_data(self):
-        """Generate some historical data for stocks"""
-        now = datetime.now()
-        
-        # Generate data for the past 30 days for each stock
-        for stock_id in range(1, self.stock_id_counter):
-            stock = self.get_stock(stock_id)
-            if not stock:
-                continue
+        # Sample historical data (abbreviated)
+        self.historical_data = [
+            # Apple historical data (just 3 days as examples)
+            HistoricalData(
+                id=f"hist1-{uuid.uuid4()}",
+                stockId="stock1",
+                date=datetime(2025, 4, 1),
+                open=168.00,
+                high=170.50,
+                low=167.80,
+                close=170.50,
+                volume=75000000
+            ),
+            HistoricalData(
+                id=f"hist1-{uuid.uuid4()}",
+                stockId="stock1",
+                date=datetime(2025, 3, 31),
+                open=167.50,
+                high=169.20,
+                low=167.30,
+                close=168.75,
+                volume=68000000
+            ),
+            HistoricalData(
+                id=f"hist1-{uuid.uuid4()}",
+                stockId="stock1",
+                date=datetime(2025, 3, 30),
+                open=166.80,
+                high=168.10,
+                low=166.50,
+                close=167.50,
+                volume=62000000
+            ),
             
-            base_price = stock.currentPrice * 0.85  # Start at 85% of current price
-            volume_base = stock.volume or 1000000
-            
-            for i in range(30):
-                # Date i days ago
-                date = now - timedelta(days=29-i)
-                
-                # Random price fluctuation within a range
-                daily_volatility = 0.02
-                open_price = base_price * (1 + random.uniform(-daily_volatility, daily_volatility))
-                close_price = open_price * (1 + random.uniform(-daily_volatility, daily_volatility))
-                high_price = max(open_price, close_price) * (1 + random.uniform(0, daily_volatility))
-                low_price = min(open_price, close_price) * (1 - random.uniform(0, daily_volatility))
-                
-                # Random volume
-                volume = int(volume_base * random.uniform(0.7, 1.3))
-                
-                # Add historical data point
-                self.create_historical_data_point({
-                    "stockId": stock_id,
-                    "date": date,
-                    "open": open_price,
-                    "high": high_price,
-                    "low": low_price,
-                    "close": close_price,
-                    "volume": volume,
-                    "adjustedClose": close_price
-                })
-                
-                # Update base price for next day
-                base_price = close_price
+            # Microsoft historical data (just 3 days as examples)
+            HistoricalData(
+                id=f"hist2-{uuid.uuid4()}",
+                stockId="stock2",
+                date=datetime(2025, 4, 1),
+                open=322.40,
+                high=323.15,
+                low=319.80,
+                close=320.10,
+                volume=25000000
+            ),
+            HistoricalData(
+                id=f"hist2-{uuid.uuid4()}",
+                stockId="stock2",
+                date=datetime(2025, 3, 31),
+                open=321.75,
+                high=324.20,
+                low=321.50,
+                close=322.40,
+                volume=22000000
+            ),
+            HistoricalData(
+                id=f"hist2-{uuid.uuid4()}",
+                stockId="stock2",
+                date=datetime(2025, 3, 30),
+                open=320.80,
+                high=322.50,
+                low=320.60,
+                close=321.75,
+                volume=20000000
+            )
+        ]
+        
+        # Sample watchlists
+        self.watchlists = [
+            Watchlist(
+                id="watch1",
+                userId="user1",
+                stockId="stock1",
+                alertPrice=180.00,
+                alertCondition="ABOVE"
+            ),
+            Watchlist(
+                id="watch2",
+                userId="user1",
+                stockId="stock3",
+                alertPrice=135.00,
+                alertCondition="BELOW"
+            ),
+            Watchlist(
+                id="watch3",
+                userId="user2",
+                stockId="stock4",
+                alertPrice=200.00,
+                alertCondition="ABOVE"
+            ),
+            Watchlist(
+                id="watch4",
+                userId="user2",
+                stockId="stock5",
+                alertPrice=220.00,
+                alertCondition="BELOW"
+            )
+        ]
+        
+        # Sample portfolios
+        self.portfolios = [
+            Portfolio(
+                id="port1",
+                userId="user1",
+                stockId="stock1",
+                quantity=10,
+                averageBuyPrice=165.75
+            ),
+            Portfolio(
+                id="port2",
+                userId="user1",
+                stockId="stock4",
+                quantity=5,
+                averageBuyPrice=170.50
+            ),
+            Portfolio(
+                id="port3",
+                userId="user2",
+                stockId="stock2",
+                quantity=8,
+                averageBuyPrice=315.25
+            ),
+            Portfolio(
+                id="port4",
+                userId="user2",
+                stockId="stock3",
+                quantity=15,
+                averageBuyPrice=140.80
+            )
+        ]
+        
+        # Sample strategies
+        self.strategies = [
+            Strategy(
+                id="strat1",
+                userId="user1",
+                name="Tech Growth Strategy",
+                description="Focus on high-growth tech stocks with strong momentum",
+                indicators=[
+                    {"type": "SMA", "period": 50},
+                    {"type": "RSI", "period": 14, "overbought": 70, "oversold": 30}
+                ],
+                entryConditions=[
+                    {"indicator": "SMA", "condition": "PRICE_ABOVE_SMA"},
+                    {"indicator": "RSI", "condition": "RSI_ABOVE", "value": 50}
+                ],
+                exitConditions=[
+                    {"indicator": "TRAILING_STOP", "value": 10},
+                    {"indicator": "RSI", "condition": "RSI_ABOVE", "value": 75}
+                ],
+                riskManagement={
+                    "maxPositionSize": 5,
+                    "stopLossPercent": 5
+                },
+                status="ACTIVE",
+                targetStocks=["stock1", "stock2", "stock3", "stock4"]
+            ),
+            Strategy(
+                id="strat2",
+                userId="user2",
+                name="Value Investing",
+                description="Focus on undervalued stocks with strong fundamentals",
+                indicators=[
+                    {"type": "PE_RATIO", "maxValue": 20},
+                    {"type": "DIVIDEND_YIELD", "minValue": 1.5}
+                ],
+                entryConditions=[
+                    {"indicator": "PE_RATIO", "condition": "BELOW", "value": 15},
+                    {"indicator": "PRICE_TO_BOOK", "condition": "BELOW", "value": 2.5}
+                ],
+                exitConditions=[
+                    {"indicator": "PRICE_TARGET", "condition": "REACHED", "value": 20},
+                    {"indicator": "TRAILING_STOP", "value": 15}
+                ],
+                riskManagement={
+                    "maxPositionSize": 10,
+                    "stopLossPercent": 10
+                },
+                status="INACTIVE",
+                targetStocks=["stock5"]
+            )
+        ]
+        
+        # Sample transactions
+        self.transactions = [
+            Transaction(
+                id="trans1",
+                userId="user1",
+                stockId="stock1",
+                type="BUY",
+                quantity=10,
+                price=165.75,
+                totalAmount=1657.50,
+                status="COMPLETED",
+                createdAt=datetime(2025, 3, 20),
+                completedAt=datetime(2025, 3, 20)
+            ),
+            Transaction(
+                id="trans2",
+                userId="user1",
+                stockId="stock4",
+                type="BUY",
+                quantity=5,
+                price=170.50,
+                totalAmount=852.50,
+                status="COMPLETED",
+                createdAt=datetime(2025, 3, 22),
+                completedAt=datetime(2025, 3, 22)
+            ),
+            Transaction(
+                id="trans3",
+                userId="user2",
+                stockId="stock2",
+                type="BUY",
+                quantity=8,
+                price=315.25,
+                totalAmount=2522.00,
+                status="COMPLETED",
+                createdAt=datetime(2025, 3, 18),
+                completedAt=datetime(2025, 3, 18)
+            ),
+            Transaction(
+                id="trans4",
+                userId="user2",
+                stockId="stock3",
+                type="BUY",
+                quantity=15,
+                price=140.80,
+                totalAmount=2112.00,
+                status="COMPLETED",
+                createdAt=datetime(2025, 3, 25),
+                completedAt=datetime(2025, 3, 25)
+            )
+        ]
+        
+        # Sample notifications
+        self.notifications = [
+            Notification(
+                id="notif1",
+                userId="user1",
+                title="Price Alert",
+                message="Apple Inc. (AAPL) has reached your alert price of $170.00",
+                type="ALERT",
+                relatedEntityId="stock1",
+                createdAt=datetime(2025, 4, 1)
+            ),
+            Notification(
+                id="notif2",
+                userId="user1",
+                title="Strategy Alert",
+                message="Your 'Tech Growth Strategy' has triggered a buy signal for Google (GOOGL)",
+                type="STRATEGY",
+                relatedEntityId="strat1",
+                createdAt=datetime(2025, 4, 1)
+            ),
+            Notification(
+                id="notif3",
+                userId="user2",
+                title="Price Alert",
+                message="Tesla Inc. (TSLA) has dropped below your alert price of $245.00",
+                type="ALERT",
+                relatedEntityId="stock5",
+                createdAt=datetime(2025, 4, 1)
+            )
+        ]
+        
+        # Sample chat messages
+        self.chat_messages = [
+            ChatMessage(
+                id="chat1",
+                userId="user1",
+                message="What are the best tech stocks to invest in right now?",
+                response="Based on current market analysis, the most promising tech stocks include AAPL, MSFT, and GOOGL due to their strong financial positions, growth prospects, and AI initiatives. Consider reviewing their latest earnings reports and industry trends before making investment decisions.",
+                context={
+                    "sector": "Technology",
+                    "risk_profile": "Moderate"
+                },
+                createdAt=datetime(2025, 3, 30),
+                respondedAt=datetime(2025, 3, 30)
+            ),
+            ChatMessage(
+                id="chat2",
+                userId="user2",
+                message="Should I sell my Tesla shares?",
+                response="The decision to sell Tesla shares depends on your investment goals, time horizon, and risk tolerance. Currently, Tesla faces increased competition, but maintains strong market position in EVs. Consider partial profit-taking while maintaining some exposure if you believe in their long-term potential with autonomous driving and energy solutions.",
+                context={
+                    "holding": "TSLA",
+                    "risk_profile": "Aggressive"
+                },
+                createdAt=datetime(2025, 3, 31),
+                respondedAt=datetime(2025, 3, 31)
+            )
+        ]
     
-    # =========================================================================
-    # User operations
-    # =========================================================================
-    def get_user(self, id: int) -> Optional[User]:
-        return self.users.get(id)
-    
+    # User methods
     def get_user_by_username(self, username: str) -> Optional[User]:
-        for user in self.users.values():
-            if user.username.lower() == username.lower():
+        """Get a user by username"""
+        for user in self.users:
+            if user.username == username:
                 return user
         return None
     
     def get_user_by_email(self, email: str) -> Optional[User]:
-        for user in self.users.values():
-            if user.email.lower() == email.lower():
+        """Get a user by email"""
+        for user in self.users:
+            if user.email == email:
                 return user
         return None
     
-    def create_user(self, user_data: dict) -> User:
-        user_id = self.user_id_counter
-        self.user_id_counter += 1
+    def get_user(self, user_id: str) -> Optional[User]:
+        """Get a user by ID"""
+        for user in self.users:
+            if user.id == user_id:
+                return user
+        return None
+    
+    def create_user(self, user_data: Dict[str, Any]) -> User:
+        """Create a new user"""
+        # Generate ID if not provided
+        if "id" not in user_data:
+            user_data["id"] = str(uuid.uuid4())
         
-        user = User(
-            id=user_id,
-            username=user_data.get("username"),
-            password=user_data.get("password"),
-            email=user_data.get("email"),
-            fullName=user_data.get("fullName"),
-            profileImage=user_data.get("profileImage"),
-            phoneNumber=user_data.get("phoneNumber"),
-            preferences=user_data.get("preferences", {}),
-            accountBalance=user_data.get("accountBalance", 0.0),
-            createdAt=datetime.now(),
-            lastLoginAt=datetime.now()
-        )
+        # Create User instance
+        user = User(**user_data)
         
-        self.users[user_id] = user
+        # Add to storage
+        self.users.append(user)
+        
         return user
     
-    def update_user(self, id: int, user_data: dict) -> Optional[User]:
-        user = self.get_user(id)
+    def update_user(self, user_id: str, user_data: Dict[str, Any]) -> Optional[User]:
+        """Update a user"""
+        user = self.get_user(user_id)
+        
         if not user:
             return None
         
-        # Update fields that are provided
-        for field, value in user_data.items():
-            if hasattr(user, field) and field != "id":
-                setattr(user, field, value)
+        # Update fields
+        for key, value in user_data.items():
+            if hasattr(user, key):
+                setattr(user, key, value)
         
-        self.users[id] = user
+        # Update timestamp
+        user.updatedAt = datetime.now()
+        
         return user
     
-    def update_last_login(self, id: int) -> Optional[User]:
-        user = self.get_user(id)
+    def update_account_balance(self, user_id: str, balance: float) -> Optional[User]:
+        """Update a user's account balance"""
+        user = self.get_user(user_id)
+        
         if not user:
             return None
         
-        user.lastLoginAt = datetime.now()
-        self.users[id] = user
+        user.accountBalance = balance
+        user.updatedAt = datetime.now()
+        
         return user
     
-    def update_account_balance(self, id: int, new_balance: float) -> Optional[User]:
-        user = self.get_user(id)
+    def update_last_login(self, user_id: str) -> Optional[User]:
+        """Update a user's last login time"""
+        user = self.get_user(user_id)
+        
         if not user:
             return None
         
-        user.accountBalance = new_balance
-        self.users[id] = user
+        user.lastLogin = datetime.now()
+        
         return user
     
-    # =========================================================================
-    # Stock operations
-    # =========================================================================
-    def get_stock(self, id: int) -> Optional[Stock]:
-        return self.stocks.get(id)
+    # Stock methods
+    def get_all_stocks(self, limit: int = 100, offset: int = 0, 
+                       sector: Optional[str] = None,
+                       exchange: Optional[str] = None,
+                       min_price: Optional[float] = None,
+                       max_price: Optional[float] = None) -> List[Stock]:
+        """Get all stocks with optional filtering"""
+        filtered_stocks = self.stocks
+        
+        # Apply filters
+        if sector:
+            filtered_stocks = [s for s in filtered_stocks if s.sector == sector]
+        
+        if exchange:
+            filtered_stocks = [s for s in filtered_stocks if s.exchange == exchange]
+        
+        if min_price is not None:
+            filtered_stocks = [s for s in filtered_stocks if s.currentPrice >= min_price]
+        
+        if max_price is not None:
+            filtered_stocks = [s for s in filtered_stocks if s.currentPrice <= max_price]
+        
+        # Apply pagination
+        start_idx = offset
+        end_idx = offset + limit
+        
+        return filtered_stocks[start_idx:end_idx]
+    
+    def get_stock(self, stock_id: str) -> Optional[Stock]:
+        """Get a stock by ID"""
+        for stock in self.stocks:
+            if stock.id == stock_id:
+                return stock
+        return None
     
     def get_stock_by_symbol(self, symbol: str) -> Optional[Stock]:
-        for stock in self.stocks.values():
+        """Get a stock by symbol"""
+        for stock in self.stocks:
             if stock.symbol.upper() == symbol.upper():
                 return stock
         return None
     
-    def get_all_stocks(self) -> List[Stock]:
-        return list(self.stocks.values())
-    
-    def get_top_stocks(self, limit: int = 10) -> List[Stock]:
-        # Skip the first two stocks (market indices)
-        stocks = list(self.stocks.values())[2:]
-        # Sort by market cap and return top N
-        return sorted(stocks, key=lambda x: x.marketCap or 0, reverse=True)[:limit]
-    
-    def create_stock(self, stock_data: dict) -> Stock:
-        stock_id = self.stock_id_counter
-        self.stock_id_counter += 1
+    def get_top_stocks(self, limit: int = 5, 
+                       filter_by: str = "performance") -> List[Stock]:
+        """Get top performing stocks"""
+        if filter_by == "performance":
+            # Sort by daily performance
+            sorted_stocks = sorted(
+                self.stocks, 
+                key=lambda s: s.dailyChangePercent, 
+                reverse=True
+            )
+        elif filter_by == "volume":
+            # Sort by volume
+            sorted_stocks = sorted(
+                self.stocks, 
+                key=lambda s: s.volume, 
+                reverse=True
+            )
+        elif filter_by == "market_cap":
+            # Sort by market cap
+            sorted_stocks = sorted(
+                [s for s in self.stocks if s.marketCap is not None], 
+                key=lambda s: s.marketCap, 
+                reverse=True
+            )
+        else:
+            sorted_stocks = self.stocks
         
-        stock = Stock(
-            id=stock_id,
-            symbol=stock_data.get("symbol"),
-            name=stock_data.get("name"),
-            exchange=stock_data.get("exchange"),
-            currentPrice=stock_data.get("currentPrice"),
-            previousClose=stock_data.get("previousClose"),
-            change=stock_data.get("change"),
-            changePercent=stock_data.get("changePercent"),
-            volume=stock_data.get("volume"),
-            marketCap=stock_data.get("marketCap"),
-            dayHigh=stock_data.get("dayHigh"),
-            dayLow=stock_data.get("dayLow"),
-            fiftyTwoWeekHigh=stock_data.get("fiftyTwoWeekHigh"),
-            fiftyTwoWeekLow=stock_data.get("fiftyTwoWeekLow"),
-            pe=stock_data.get("pe"),
-            eps=stock_data.get("eps"),
-            dividend=stock_data.get("dividend"),
-            sector=stock_data.get("sector"),
-            industry=stock_data.get("industry"),
-            description=stock_data.get("description"),
-            updatedAt=datetime.now()
+        return sorted_stocks[:limit]
+    
+    def search_stocks(self, query: str, limit: int = 10) -> List[Stock]:
+        """Search stocks by name or symbol"""
+        # Case-insensitive search in name and symbol
+        query = query.lower()
+        results = []
+        
+        for stock in self.stocks:
+            if (query in stock.name.lower() or 
+                query in stock.symbol.lower() or
+                (stock.description and query in stock.description.lower())):
+                results.append(stock)
+                
+                if len(results) >= limit:
+                    break
+        
+        return results
+    
+    def get_unique_sectors(self) -> List[str]:
+        """Get all unique sectors"""
+        sectors = set()
+        
+        for stock in self.stocks:
+            if stock.sector:
+                sectors.add(stock.sector)
+        
+        return sorted(list(sectors))
+    
+    def get_unique_exchanges(self) -> List[str]:
+        """Get all unique exchanges"""
+        exchanges = set()
+        
+        for stock in self.stocks:
+            exchanges.add(stock.exchange)
+        
+        return sorted(list(exchanges))
+    
+    # AI recommendation methods
+    def get_all_ai_suggestions(self, limit: int = 100, offset: int = 0,
+                              suggestion_type: Optional[str] = None,
+                              sentiment: Optional[str] = None) -> List[AIRecommendation]:
+        """Get all AI suggestions with optional filtering"""
+        filtered_suggestions = self.ai_recommendations
+        
+        # Apply filters
+        if suggestion_type:
+            filtered_suggestions = [s for s in filtered_suggestions if s.type == suggestion_type.upper()]
+        
+        if sentiment:
+            filtered_suggestions = [s for s in filtered_suggestions if s.sentiment == sentiment.upper()]
+        
+        # Apply pagination
+        start_idx = offset
+        end_idx = offset + limit
+        
+        return filtered_suggestions[start_idx:end_idx]
+    
+    def get_top_ai_suggestions(self, limit: int = 5,
+                              suggestion_type: Optional[str] = None) -> List[AIRecommendation]:
+        """Get top AI suggestions based on confidence score"""
+        filtered_suggestions = self.ai_recommendations
+        
+        # Apply type filter if provided
+        if suggestion_type:
+            filtered_suggestions = [s for s in filtered_suggestions if s.type == suggestion_type.upper()]
+        
+        # Sort by confidence score
+        sorted_suggestions = sorted(
+            filtered_suggestions,
+            key=lambda s: s.confidence,
+            reverse=True
         )
         
-        self.stocks[stock_id] = stock
-        return stock
+        return sorted_suggestions[:limit]
     
-    def update_stock_price(self, id: int, price: float, change: float, change_percent: float) -> Optional[Stock]:
-        stock = self.get_stock(id)
-        if not stock:
-            return None
-        
-        stock.previousClose = stock.currentPrice
-        stock.currentPrice = price
-        stock.change = change
-        stock.changePercent = change_percent
-        stock.updatedAt = datetime.now()
-        
-        self.stocks[id] = stock
-        return stock
+    def get_stock_ai_suggestion(self, stock_id: str) -> Optional[AIRecommendation]:
+        """Get AI suggestion for a specific stock"""
+        for suggestion in self.ai_recommendations:
+            if suggestion.stockId == stock_id:
+                return suggestion
+        return None
     
-    def update_stock(self, id: int, stock_data: dict) -> Optional[Stock]:
-        stock = self.get_stock(id)
-        if not stock:
-            return None
+    def get_suggestions_by_type(self, suggestion_type: str, limit: int = 10) -> List[AIRecommendation]:
+        """Get AI suggestions by type"""
+        suggestions = [s for s in self.ai_recommendations if s.type == suggestion_type]
         
-        # Update fields that are provided
-        for field, value in stock_data.items():
-            if hasattr(stock, field) and field != "id":
-                setattr(stock, field, value)
-        
-        stock.updatedAt = datetime.now()
-        self.stocks[id] = stock
-        return stock
-    
-    def get_stocks_by_trend(self, trend: str, limit: int = 10) -> List[Stock]:
-        stocks = self.get_all_stocks()
-        
-        if trend == "up":
-            # Filter stocks with positive change
-            filtered = [stock for stock in stocks if stock.change and stock.change > 0]
-            # Sort by change percent descending
-            return sorted(filtered, key=lambda x: x.changePercent or 0, reverse=True)[:limit]
-        else:  # down
-            # Filter stocks with negative change
-            filtered = [stock for stock in stocks if stock.change and stock.change < 0]
-            # Sort by change percent ascending (most negative first)
-            return sorted(filtered, key=lambda x: x.changePercent or 0)[:limit]
-    
-    def get_stocks_by_sector(self, sector: str) -> List[Stock]:
-        return [stock for stock in self.stocks.values() if stock.sector and stock.sector.lower() == sector.lower()]
-    
-    # =========================================================================
-    # Historical data operations
-    # =========================================================================
-    def get_stock_historical_data(self, stock_id: int, start_date: Optional[datetime] = None, 
-                                 end_date: Optional[datetime] = None) -> List[StockHistoricalData]:
-        data_points = [point for point in self.stock_historical_data.values() if point.stockId == stock_id]
-        
-        # Filter by date range if provided
-        if start_date:
-            data_points = [point for point in data_points if point.date >= start_date]
-        if end_date:
-            data_points = [point for point in data_points if point.date <= end_date]
-        
-        # Sort by date
-        return sorted(data_points, key=lambda x: x.date)
-    
-    def create_historical_data_point(self, data: dict) -> StockHistoricalData:
-        data_id = self.historical_data_id_counter
-        self.historical_data_id_counter += 1
-        
-        data_point = StockHistoricalData(
-            id=data_id,
-            stockId=data.get("stockId"),
-            date=data.get("date"),
-            open=data.get("open"),
-            high=data.get("high"),
-            low=data.get("low"),
-            close=data.get("close"),
-            volume=data.get("volume"),
-            adjustedClose=data.get("adjustedClose")
+        # Sort by confidence
+        sorted_suggestions = sorted(
+            suggestions,
+            key=lambda s: s.confidence,
+            reverse=True
         )
         
-        self.stock_historical_data[data_id] = data_point
-        return data_point
+        return sorted_suggestions[:limit]
     
-    def bulk_insert_historical_data(self, data_points: List[dict]) -> List[StockHistoricalData]:
-        result = []
-        for data in data_points:
-            result.append(self.create_historical_data_point(data))
-        return result
-    
-    # =========================================================================
-    # Watchlist operations
-    # =========================================================================
-    def get_watchlist(self, id: int) -> Optional[Watchlist]:
-        return self.watchlists.get(id)
-    
-    def add_to_watchlist(self, watchlist_data: dict) -> Watchlist:
-        watchlist_id = self.watchlist_id_counter
-        self.watchlist_id_counter += 1
+    # Historical data methods
+    def get_stock_historical_data(self, stock_id: str, days: int = 30) -> List[HistoricalData]:
+        """Get historical data for a stock"""
+        # Filter by stock ID
+        data = [h for h in self.historical_data if h.stockId == stock_id]
         
-        watchlist_item = Watchlist(
-            id=watchlist_id,
-            userId=watchlist_data.get("userId"),
-            stockId=watchlist_data.get("stockId"),
-            addedAt=datetime.now(),
-            alertPrice=watchlist_data.get("alertPrice"),
-            alertCondition=watchlist_data.get("alertCondition")
+        # Sort by date (newest first)
+        sorted_data = sorted(
+            data,
+            key=lambda h: h.date,
+            reverse=True
         )
         
-        self.watchlists[watchlist_id] = watchlist_item
-        return watchlist_item
+        # Limit by days
+        return sorted_data[:days]
     
-    def remove_from_watchlist(self, user_id: int, stock_id: int) -> bool:
-        # Find the watchlist item by user and stock
-        watchlist_id = None
-        for id, item in self.watchlists.items():
-            if item.userId == user_id and item.stockId == stock_id:
-                watchlist_id = id
-                break
-        
-        # Remove if found
-        if watchlist_id:
-            del self.watchlists[watchlist_id]
-            return True
-        return False
+    # Watchlist methods
+    def get_user_watchlist(self, user_id: str) -> List[Watchlist]:
+        """Get a user's watchlist"""
+        return [w for w in self.watchlists if w.userId == user_id]
     
-    def get_user_watchlist(self, user_id: int) -> List[Stock]:
-        # Get all watchlist items for the user
-        watchlist_items = [item for item in self.watchlists.values() if item.userId == user_id]
-        
-        # Get the stocks for those items
-        stocks = []
-        for item in watchlist_items:
-            stock = self.get_stock(item.stockId)
-            if stock:
-                stocks.append(stock)
-        
-        return stocks
-    
-    def get_user_watchlist_items(self, user_id: int) -> List[Watchlist]:
-        return [item for item in self.watchlists.values() if item.userId == user_id]
-    
-    def is_stock_in_watchlist(self, user_id: int, stock_id: int) -> bool:
-        for item in self.watchlists.values():
+    def is_stock_in_watchlist(self, user_id: str, stock_id: str) -> bool:
+        """Check if a stock is in a user's watchlist"""
+        for item in self.watchlists:
             if item.userId == user_id and item.stockId == stock_id:
                 return True
         return False
     
-    def update_watchlist_alert(self, id: int, alert_price: Optional[float] = None, 
-                              alert_condition: Optional[str] = None) -> Optional[Watchlist]:
-        watchlist_item = self.get_watchlist(id)
-        if not watchlist_item:
-            return None
+    def add_to_watchlist(self, watchlist_data: Dict[str, Any]) -> Watchlist:
+        """Add a stock to a user's watchlist"""
+        # Generate ID if not provided
+        if "id" not in watchlist_data:
+            watchlist_data["id"] = str(uuid.uuid4())
         
-        if alert_price is not None:
-            watchlist_item.alertPrice = alert_price
-        if alert_condition is not None:
-            watchlist_item.alertCondition = alert_condition
+        # Create Watchlist instance
+        watchlist_item = Watchlist(**watchlist_data)
         
-        self.watchlists[id] = watchlist_item
+        # Add to storage
+        self.watchlists.append(watchlist_item)
+        
         return watchlist_item
     
-    # =========================================================================
-    # Trading Strategy operations
-    # =========================================================================
-    def get_strategy(self, id: int) -> Optional[TradingStrategy]:
-        return self.trading_strategies.get(id)
-    
-    def get_user_strategies(self, user_id: int) -> List[TradingStrategy]:
-        return [strategy for strategy in self.trading_strategies.values() if strategy.userId == user_id]
-    
-    def create_strategy(self, strategy_data: dict) -> TradingStrategy:
-        strategy_id = self.strategy_id_counter
-        self.strategy_id_counter += 1
+    def update_watchlist_item(self, user_id: str, stock_id: str, 
+                             alert_price: Optional[float], 
+                             alert_condition: Optional[str]) -> Optional[Watchlist]:
+        """Update a watchlist item"""
+        # Find the watchlist item
+        for item in self.watchlists:
+            if item.userId == user_id and item.stockId == stock_id:
+                # Update alert settings
+                item.alertPrice = alert_price
+                item.alertCondition = alert_condition
+                
+                # Update timestamp
+                item.updatedAt = datetime.now()
+                
+                return item
         
-        strategy = TradingStrategy(
-            id=strategy_id,
-            userId=strategy_data.get("userId"),
-            name=strategy_data.get("name"),
-            description=strategy_data.get("description"),
-            conditions=strategy_data.get("conditions", {}),
-            actions=strategy_data.get("actions", {}),
-            isActive=strategy_data.get("isActive", False),
-            backtestResults=strategy_data.get("backtestResults", {}),
-            createdAt=datetime.now(),
-            updatedAt=datetime.now()
-        )
-        
-        self.trading_strategies[strategy_id] = strategy
-        return strategy
+        return None
     
-    def update_strategy(self, id: int, strategy_data: dict) -> Optional[TradingStrategy]:
-        strategy = self.get_strategy(id)
-        if not strategy:
-            return None
+    def remove_from_watchlist(self, user_id: str, stock_id: str) -> bool:
+        """Remove a stock from a user's watchlist"""
+        # Find the watchlist item
+        for i, item in enumerate(self.watchlists):
+            if item.userId == user_id and item.stockId == stock_id:
+                # Remove from list
+                self.watchlists.pop(i)
+                return True
         
-        # Update fields that are provided
-        for field, value in strategy_data.items():
-            if hasattr(strategy, field) and field != "id":
-                setattr(strategy, field, value)
-        
-        strategy.updatedAt = datetime.now()
-        self.trading_strategies[id] = strategy
-        return strategy
-    
-    def delete_strategy(self, id: int) -> bool:
-        if id in self.trading_strategies:
-            del self.trading_strategies[id]
-            return True
         return False
     
-    def toggle_strategy_status(self, id: int, is_active: bool) -> Optional[TradingStrategy]:
-        strategy = self.get_strategy(id)
-        if not strategy:
-            return None
-        
-        strategy.isActive = is_active
-        strategy.updatedAt = datetime.now()
-        self.trading_strategies[id] = strategy
-        return strategy
+    # Portfolio methods
+    def get_user_portfolio(self, user_id: str) -> List[Portfolio]:
+        """Get a user's portfolio"""
+        return [p for p in self.portfolios if p.userId == user_id]
     
-    def get_active_strategies(self) -> List[TradingStrategy]:
-        return [strategy for strategy in self.trading_strategies.values() if strategy.isActive]
+    def get_portfolio_item(self, user_id: str, stock_id: str) -> Optional[Portfolio]:
+        """Get a specific portfolio item"""
+        for item in self.portfolios:
+            if item.userId == user_id and item.stockId == stock_id:
+                return item
+        return None
     
-    # =========================================================================
-    # Transaction operations
-    # =========================================================================
-    def get_transaction(self, id: int) -> Optional[Transaction]:
-        return self.transactions.get(id)
-    
-    def get_user_transactions(self, user_id: int, limit: Optional[int] = None) -> List[Transaction]:
-        transactions = [tx for tx in self.transactions.values() if tx.userId == user_id]
+    def create_portfolio_item(self, portfolio_data: Dict[str, Any]) -> Portfolio:
+        """Create a portfolio item"""
+        # Generate ID if not provided
+        if "id" not in portfolio_data:
+            portfolio_data["id"] = str(uuid.uuid4())
         
-        # Sort by creation date, newest first
-        transactions = sorted(transactions, key=lambda x: x.createdAt, reverse=True)
+        # Create Portfolio instance
+        portfolio_item = Portfolio(**portfolio_data)
         
-        # Apply limit if provided
-        if limit:
-            transactions = transactions[:limit]
+        # Add to storage
+        self.portfolios.append(portfolio_item)
         
-        return transactions
-    
-    def create_transaction(self, transaction_data: dict) -> Transaction:
-        transaction_id = self.transaction_id_counter
-        self.transaction_id_counter += 1
-        
-        transaction = Transaction(
-            id=transaction_id,
-            userId=transaction_data.get("userId"),
-            stockId=transaction_data.get("stockId"),
-            type=transaction_data.get("type"),
-            quantity=transaction_data.get("quantity"),
-            price=transaction_data.get("price"),
-            totalAmount=transaction_data.get("totalAmount"),
-            status=transaction_data.get("status"),
-            strategyId=transaction_data.get("strategyId"),
-            createdAt=datetime.now(),
-            completedAt=datetime.now() if transaction_data.get("status") == TransactionStatus.COMPLETED else None
-        )
-        
-        self.transactions[transaction_id] = transaction
-        return transaction
-    
-    def update_transaction_status(self, id: int, status: str, 
-                                 completed_at: Optional[datetime] = None) -> Optional[Transaction]:
-        transaction = self.get_transaction(id)
-        if not transaction:
-            return None
-        
-        transaction.status = status
-        if status == TransactionStatus.COMPLETED:
-            transaction.completedAt = completed_at or datetime.now()
-        
-        self.transactions[id] = transaction
-        return transaction
-    
-    def get_transactions_by_strategy(self, strategy_id: int) -> List[Transaction]:
-        return [tx for tx in self.transactions.values() if tx.strategyId == strategy_id]
-    
-    def get_transactions_by_stock(self, stock_id: int, user_id: Optional[int] = None) -> List[Transaction]:
-        transactions = [tx for tx in self.transactions.values() if tx.stockId == stock_id]
-        
-        if user_id:
-            transactions = [tx for tx in transactions if tx.userId == user_id]
-        
-        return transactions
-    
-    # =========================================================================
-    # Portfolio operations
-    # =========================================================================
-    def get_portfolio_item(self, user_id: int, stock_id: int) -> Optional[Portfolio]:
-        key = f"{user_id}:{stock_id}"
-        return self.portfolio_items.get(key)
-    
-    def get_user_portfolio(self, user_id: int) -> List[Portfolio]:
-        return [item for key, item in self.portfolio_items.items() if key.startswith(f"{user_id}:")]
-    
-    def create_portfolio_item(self, portfolio_data: dict) -> Portfolio:
-        user_id = portfolio_data.get("userId")
-        stock_id = portfolio_data.get("stockId")
-        key = f"{user_id}:{stock_id}"
-        
-        # Check if portfolio item already exists
-        existing_item = self.get_portfolio_item(user_id, stock_id)
-        if existing_item:
-            # Update existing item
-            total_investment = (existing_item.quantity * existing_item.averageBuyPrice) + \
-                              (portfolio_data.get("quantity") * portfolio_data.get("averageBuyPrice"))
-            total_quantity = existing_item.quantity + portfolio_data.get("quantity")
-            new_avg_price = total_investment / total_quantity if total_quantity > 0 else 0
-            
-            existing_item.quantity = total_quantity
-            existing_item.averageBuyPrice = new_avg_price
-            existing_item.updatedAt = datetime.now()
-            
-            self.portfolio_items[key] = existing_item
-            return existing_item
-        
-        # Create new portfolio item
-        portfolio_item = Portfolio(
-            userId=user_id,
-            stockId=stock_id,
-            quantity=portfolio_data.get("quantity"),
-            averageBuyPrice=portfolio_data.get("averageBuyPrice"),
-            updatedAt=datetime.now()
-        )
-        
-        self.portfolio_items[key] = portfolio_item
         return portfolio_item
     
-    def update_portfolio_item(self, user_id: int, stock_id: int, quantity: float, 
-                             average_buy_price: Optional[float] = None) -> Optional[Portfolio]:
-        key = f"{user_id}:{stock_id}"
-        portfolio_item = self.portfolio_items.get(key)
+    def update_portfolio_item(self, user_id: str, stock_id: str, 
+                             quantity: float, average_buy_price: float) -> Optional[Portfolio]:
+        """Update a portfolio item"""
+        # Find the portfolio item
+        for item in self.portfolios:
+            if item.userId == user_id and item.stockId == stock_id:
+                # Update fields
+                item.quantity = quantity
+                item.averageBuyPrice = average_buy_price
+                
+                # Update timestamp
+                item.updatedAt = datetime.now()
+                
+                return item
         
-        if not portfolio_item:
-            return None
-        
-        portfolio_item.quantity = quantity
-        if average_buy_price is not None:
-            portfolio_item.averageBuyPrice = average_buy_price
-        
-        portfolio_item.updatedAt = datetime.now()
-        self.portfolio_items[key] = portfolio_item
-        return portfolio_item
+        return None
     
-    def delete_portfolio_item(self, user_id: int, stock_id: int) -> bool:
-        key = f"{user_id}:{stock_id}"
-        if key in self.portfolio_items:
-            del self.portfolio_items[key]
-            return True
+    def delete_portfolio_item(self, user_id: str, stock_id: str) -> bool:
+        """Delete a portfolio item"""
+        # Find the portfolio item
+        for i, item in enumerate(self.portfolios):
+            if item.userId == user_id and item.stockId == stock_id:
+                # Remove from list
+                self.portfolios.pop(i)
+                return True
+        
         return False
     
-    def get_portfolio_value(self, user_id: int) -> dict:
-        portfolio = self.get_user_portfolio(user_id)
+    def get_portfolio_value(self, user_id: str) -> Dict[str, Any]:
+        """Get the total value of a user's portfolio"""
+        portfolio_items = self.get_user_portfolio(user_id)
+        
         total_value = 0.0
         total_investment = 0.0
         
-        for item in portfolio:
+        for item in portfolio_items:
+            # Get current stock price
             stock = self.get_stock(item.stockId)
+            
             if stock:
-                item_current_value = stock.currentPrice * item.quantity
-                item_investment = item.averageBuyPrice * item.quantity
+                current_value = stock.currentPrice * item.quantity
+                investment_value = item.averageBuyPrice * item.quantity
                 
-                total_value += item_current_value
-                total_investment += item_investment
+                total_value += current_value
+                total_investment += investment_value
         
-        total_profit = total_value - total_investment
+        # Calculate profit/loss
+        total_profit_loss = total_value - total_investment
+        total_profit_loss_percent = (total_profit_loss / total_investment * 100) if total_investment > 0 else 0
         
         return {
             "totalValue": total_value,
             "totalInvestment": total_investment,
-            "totalProfit": total_profit
+            "totalProfitLoss": total_profit_loss,
+            "totalProfitLossPercent": total_profit_loss_percent
         }
     
-    # =========================================================================
-    # AI Suggestions operations
-    # =========================================================================
-    def get_ai_suggestion(self, id: int) -> Optional[AiSuggestion]:
-        return self.ai_suggestions.get(id)
+    # Strategy methods
+    def get_user_strategies(self, user_id: str) -> List[Strategy]:
+        """Get a user's trading strategies"""
+        return [s for s in self.strategies if s.userId == user_id]
     
-    def get_stock_ai_suggestion(self, stock_id: int) -> Optional[AiSuggestion]:
-        # Get newest suggestion for this stock
-        suggestions = [s for s in self.ai_suggestions.values() if s.stockId == stock_id]
-        if not suggestions:
+    def get_strategy(self, strategy_id: str) -> Optional[Strategy]:
+        """Get a strategy by ID"""
+        for strategy in self.strategies:
+            if strategy.id == strategy_id:
+                return strategy
+        return None
+    
+    def create_strategy(self, strategy_data: Dict[str, Any]) -> Strategy:
+        """Create a trading strategy"""
+        # Generate ID if not provided
+        if "id" not in strategy_data:
+            strategy_data["id"] = str(uuid.uuid4())
+        
+        # Create Strategy instance
+        strategy = Strategy(**strategy_data)
+        
+        # Add to storage
+        self.strategies.append(strategy)
+        
+        return strategy
+    
+    def update_strategy(self, strategy_id: str, strategy_data: Dict[str, Any]) -> Optional[Strategy]:
+        """Update a trading strategy"""
+        strategy = self.get_strategy(strategy_id)
+        
+        if not strategy:
             return None
         
-        # Sort by creation date, newest first
-        return sorted(suggestions, key=lambda x: x.createdAt, reverse=True)[0]
-    
-    def get_all_ai_suggestions(self) -> List[AiSuggestion]:
-        return list(self.ai_suggestions.values())
-    
-    def get_top_ai_suggestions(self, limit: int = 5) -> List[AiSuggestion]:
-        # Get all suggestions and sort by confidence
-        suggestions = list(self.ai_suggestions.values())
-        suggestions = [s for s in suggestions if s.confidence]
-        return sorted(suggestions, key=lambda x: x.confidence or 0, reverse=True)[:limit]
-    
-    def create_ai_suggestion(self, suggestion_data: dict) -> AiSuggestion:
-        suggestion_id = self.ai_suggestion_id_counter
-        self.ai_suggestion_id_counter += 1
+        # Update fields
+        for key, value in strategy_data.items():
+            if hasattr(strategy, key):
+                setattr(strategy, key, value)
         
-        # Default expiry is 7 days from now
-        expires_at = suggestion_data.get("expiresAt", datetime.now() + timedelta(days=7))
+        # Update timestamp
+        strategy.updatedAt = datetime.now()
         
-        suggestion = AiSuggestion(
-            id=suggestion_id,
-            stockId=suggestion_data.get("stockId"),
-            suggestion=suggestion_data.get("suggestion"),
-            targetPrice=suggestion_data.get("targetPrice"),
-            stopLoss=suggestion_data.get("stopLoss"),
-            confidence=suggestion_data.get("confidence"),
-            rationale=suggestion_data.get("rationale"),
-            timeframe=suggestion_data.get("timeframe"),
-            createdAt=datetime.now(),
-            expiresAt=expires_at
+        return strategy
+    
+    def delete_strategy(self, strategy_id: str) -> bool:
+        """Delete a trading strategy"""
+        for i, strategy in enumerate(self.strategies):
+            if strategy.id == strategy_id:
+                self.strategies.pop(i)
+                return True
+        return False
+    
+    def toggle_strategy_status(self, strategy_id: str) -> Optional[Strategy]:
+        """Toggle a strategy's active status"""
+        strategy = self.get_strategy(strategy_id)
+        
+        if not strategy:
+            return None
+        
+        # Toggle status
+        if strategy.status == "ACTIVE":
+            strategy.status = "INACTIVE"
+        else:
+            strategy.status = "ACTIVE"
+        
+        # Update timestamp
+        strategy.updatedAt = datetime.now()
+        
+        return strategy
+    
+    # Transaction methods
+    def get_user_transactions(self, user_id: str, limit: int = 100, offset: int = 0,
+                              transaction_type: Optional[str] = None) -> List[Transaction]:
+        """Get a user's transactions"""
+        # Filter by user ID
+        transactions = [t for t in self.transactions if t.userId == user_id]
+        
+        # Apply type filter if provided
+        if transaction_type:
+            transactions = [t for t in transactions if t.type == transaction_type.upper()]
+        
+        # Sort by creation date (newest first)
+        sorted_transactions = sorted(
+            transactions,
+            key=lambda t: t.createdAt,
+            reverse=True
         )
         
-        self.ai_suggestions[suggestion_id] = suggestion
-        return suggestion
+        # Apply pagination
+        start_idx = offset
+        end_idx = offset + limit
+        
+        return sorted_transactions[start_idx:end_idx]
     
-    def get_suggestions_by_type(self, suggestion_type: str, limit: Optional[int] = None) -> List[AiSuggestion]:
-        suggestions = [s for s in self.ai_suggestions.values() if s.suggestion == suggestion_type]
+    def create_transaction(self, transaction_data: Dict[str, Any]) -> Transaction:
+        """Create a transaction record"""
+        # Generate ID if not provided
+        if "id" not in transaction_data:
+            transaction_data["id"] = str(uuid.uuid4())
         
-        # Sort by confidence, highest first
-        suggestions = sorted(suggestions, key=lambda x: x.confidence or 0, reverse=True)
+        # If completed time not provided and status is COMPLETED, set to current time
+        if "completedAt" not in transaction_data and transaction_data.get("status") == "COMPLETED":
+            transaction_data["completedAt"] = datetime.now()
         
-        # Apply limit if provided
-        if limit:
-            suggestions = suggestions[:limit]
+        # Create Transaction instance
+        transaction = Transaction(**transaction_data)
         
-        return suggestions
+        # Add to storage
+        self.transactions.append(transaction)
+        
+        return transaction
     
-    def get_suggestions_by_timeframe(self, timeframe: str, limit: Optional[int] = None) -> List[AiSuggestion]:
-        suggestions = [s for s in self.ai_suggestions.values() if s.timeframe == timeframe]
+    # Notification methods
+    def get_user_notifications(self, user_id: str, limit: int = 100, offset: int = 0,
+                              include_read: bool = False) -> List[Notification]:
+        """Get a user's notifications"""
+        # Filter by user ID
+        notifications = [n for n in self.notifications if n.userId == user_id]
         
-        # Sort by confidence, highest first
-        suggestions = sorted(suggestions, key=lambda x: x.confidence or 0, reverse=True)
-        
-        # Apply limit if provided
-        if limit:
-            suggestions = suggestions[:limit]
-        
-        return suggestions
-    
-    # =========================================================================
-    # Notification operations
-    # =========================================================================
-    def get_notification(self, id: int) -> Optional[Notification]:
-        return self.notifications.get(id)
-    
-    def get_user_notifications(self, user_id: int, limit: Optional[int] = None, 
-                              only_unread: bool = False) -> List[Notification]:
-        notifications = [n for n in self.notifications.values() if n.userId == user_id]
-        
-        # Filter unread if requested
-        if only_unread:
+        # Filter out read notifications if specified
+        if not include_read:
             notifications = [n for n in notifications if not n.isRead]
         
-        # Sort by creation date, newest first
-        notifications = sorted(notifications, key=lambda x: x.createdAt, reverse=True)
-        
-        # Apply limit if provided
-        if limit:
-            notifications = notifications[:limit]
-        
-        return notifications
-    
-    def create_notification(self, notification_data: dict) -> Notification:
-        notification_id = self.notification_id_counter
-        self.notification_id_counter += 1
-        
-        notification = Notification(
-            id=notification_id,
-            userId=notification_data.get("userId"),
-            type=notification_data.get("type"),
-            title=notification_data.get("title"),
-            message=notification_data.get("message"),
-            isRead=notification_data.get("isRead", False),
-            relatedEntityType=notification_data.get("relatedEntityType"),
-            relatedEntityId=notification_data.get("relatedEntityId"),
-            createdAt=datetime.now()
+        # Sort by creation date (newest first)
+        sorted_notifications = sorted(
+            notifications,
+            key=lambda n: n.createdAt,
+            reverse=True
         )
         
-        self.notifications[notification_id] = notification
-        return notification
-    
-    def mark_notification_as_read(self, id: int) -> Optional[Notification]:
-        notification = self.get_notification(id)
-        if not notification:
-            return None
+        # Apply pagination
+        start_idx = offset
+        end_idx = offset + limit
         
-        notification.isRead = True
-        self.notifications[id] = notification
+        return sorted_notifications[start_idx:end_idx]
+    
+    def create_notification(self, notification_data: Dict[str, Any]) -> Notification:
+        """Create a notification"""
+        # Generate ID if not provided
+        if "id" not in notification_data:
+            notification_data["id"] = str(uuid.uuid4())
+        
+        # Create Notification instance
+        notification = Notification(**notification_data)
+        
+        # Add to storage
+        self.notifications.append(notification)
+        
         return notification
     
-    def mark_all_notifications_as_read(self, user_id: int) -> int:
+    def mark_notification_as_read(self, notification_id: str) -> Optional[Notification]:
+        """Mark a notification as read"""
+        for notification in self.notifications:
+            if notification.id == notification_id:
+                notification.isRead = True
+                notification.readAt = datetime.now()
+                return notification
+        return None
+    
+    def mark_all_notifications_as_read(self, user_id: str) -> int:
+        """Mark all notifications for a user as read"""
         count = 0
-        for id, notification in list(self.notifications.items()):
+        
+        for notification in self.notifications:
             if notification.userId == user_id and not notification.isRead:
                 notification.isRead = True
-                self.notifications[id] = notification
+                notification.readAt = datetime.now()
                 count += 1
         
         return count
     
-    def delete_notification(self, id: int) -> bool:
-        if id in self.notifications:
-            del self.notifications[id]
-            return True
-        return False
-    
-    # =========================================================================
-    # Chat Message operations
-    # =========================================================================
-    def get_chat_messages(self, user_id: int, limit: Optional[int] = None) -> List[ChatMessage]:
-        messages = [m for m in self.chat_messages.values() if m.userId == user_id]
+    # Chat methods
+    def get_user_chat_history(self, user_id: str, limit: int = 100, offset: int = 0) -> List[ChatMessage]:
+        """Get a user's chat history"""
+        # Filter by user ID
+        messages = [m for m in self.chat_messages if m.userId == user_id]
         
-        # Sort by creation date
-        messages = sorted(messages, key=lambda x: x.createdAt)
-        
-        # Apply limit if provided
-        if limit:
-            messages = messages[-limit:]  # Get the most recent messages
-        
-        return messages
-    
-    def save_chat_message(self, message_data: dict) -> ChatMessage:
-        message_id = self.chat_message_id_counter
-        self.chat_message_id_counter += 1
-        
-        chat_message = ChatMessage(
-            id=message_id,
-            userId=message_data.get("userId"),
-            sender=message_data.get("sender"),
-            message=message_data.get("message"),
-            context=message_data.get("context", {}),
-            createdAt=datetime.now()
+        # Sort by creation date (newest first)
+        sorted_messages = sorted(
+            messages,
+            key=lambda m: m.createdAt,
+            reverse=True
         )
         
-        self.chat_messages[message_id] = chat_message
-        return chat_message
+        # Apply pagination
+        start_idx = offset
+        end_idx = offset + limit
+        
+        return sorted_messages[start_idx:end_idx]
     
-    def clear_chat_history(self, user_id: int) -> bool:
-        # Find all messages for the user
-        message_ids = [id for id, message in self.chat_messages.items() if message.userId == user_id]
+    def create_chat_message(self, message_data: Dict[str, Any]) -> ChatMessage:
+        """Create a chat message"""
+        # Generate ID if not provided
+        if "id" not in message_data:
+            message_data["id"] = str(uuid.uuid4())
         
-        # Delete all found messages
-        for id in message_ids:
-            del self.chat_messages[id]
+        # Create ChatMessage instance
+        message = ChatMessage(**message_data)
         
-        return True
+        # Add to storage
+        self.chat_messages.append(message)
+        
+        return message
+    
+    def update_chat_response(self, message_id: str, response: str) -> Optional[ChatMessage]:
+        """Update a chat message with an AI response"""
+        for message in self.chat_messages:
+            if message.id == message_id:
+                message.response = response
+                message.respondedAt = datetime.now()
+                return message
+        return None
+    
+    def clear_chat_history(self, user_id: str) -> int:
+        """Clear a user's chat history"""
+        count = 0
+        indices_to_remove = []
+        
+        # Find messages to remove
+        for i, message in enumerate(self.chat_messages):
+            if message.userId == user_id:
+                indices_to_remove.append(i)
+                count += 1
+        
+        # Remove messages in reverse order to avoid index issues
+        for i in sorted(indices_to_remove, reverse=True):
+            self.chat_messages.pop(i)
+        
+        return count
