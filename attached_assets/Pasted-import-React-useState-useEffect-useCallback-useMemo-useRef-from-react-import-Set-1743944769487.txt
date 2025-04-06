@@ -1,0 +1,1007 @@
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import {
+    Settings, Moon, Sun, Bell, RotateCw, Search, Mic, User, Lock, Shield, Settings2, LogOut,
+    Brain, ArrowUp, ArrowDown, Minus, List, Plus, LineChart, TrendingUp, Move, Info, X,
+    Check, BarChart2, Newspaper, Lightbulb, ListChecks, MessageSquare, Palette, ChevronDown, ChevronUp, AlertCircle
+} from 'lucide-react';
+
+// --- Initial Data (Simulated) ---
+// (Data remains the same, prices will be static now)
+const initialMarketSummary = {
+    text: "Markets exhibit cautious optimism. Nifty holds above 22k support, driven by select heavyweights. Midcaps see profit booking. FIIs turn net buyers after several sessions, providing support. Global cues remain mixed.",
+    sentiment: 'neutral',
+    breadth: { advances: 1250, declines: 800, unchanged: 150 }
+};
+
+const initialIndices = [
+    { id: 'i1', name: 'NIFTY 50', price: '22,185.20', change: '+90.00', percentChange: '+0.41%', open: '22,120.10', high: '22,210.50', low: '22,090.80', prevClose: '22,095.20' },
+    { id: 'i2', name: 'SENSEX', price: '73,110.80', change: '+341.43', percentChange: '+0.47%', open: '72,850.00', high: '73,150.00', low: '72,750.00', prevClose: '72,769.37' },
+    { id: 'i3', name: 'BANK NIFTY', price: '46,590.50', change: '-173.90', percentChange: '-0.37%', open: '46,800.00', high: '46,850.00', low: '46,550.00', prevClose: '46,764.40' },
+    { id: 'i4', name: 'NIFTY IT', price: '33,780.10', change: '+129.30', percentChange: '+0.38%' },
+    { id: 'i5', name: 'NIFTY AUTO', price: '16,010.90', change: '+60.50', percentChange: '+0.38%' },
+];
+
+const initialTrendingStocks = [
+    { name: 'ZEEL', price: '145.80', change: '+8.50%', percentChange: '+8.50%' },
+    { name: 'RELIANCE', price: '2,855.20', change: '+0.35%', percentChange: '+0.35%' },
+    { name: 'YESBANK', price: '23.50', change: '+2.17%', percentChange: '+2.17%' },
+    { name: 'TATAMOTORS', price: '992.10', change: '+0.36%', percentChange: '+0.36%' },
+    { name: 'IRFC', price: '140.75', change: '-1.54%', percentChange: '-1.54%' },
+];
+
+const initialMarketMovers = {
+    gainers: [
+        { name: 'ZEEL', change: '+8.50%', percentChange: '+8.50%' },
+        { name: 'PAYTM', change: '+5.00%', percentChange: '+5.00%' },
+        { name: 'INDUSTOWER', change: '+4.80%', percentChange: '+4.80%' },
+        { name: 'BHEL', change: '+4.55%', percentChange: '+4.55%' },
+    ],
+    losers: [
+        { name: 'IRFC', change: '-1.54%', percentChange: '-1.54%' },
+        { name: 'SAIL', change: '-1.20%', percentChange: '-1.20%' },
+        { name: 'BANDHANBNK', change: '-1.15%', percentChange: '-1.15%' },
+        { name: 'IDEA', change: '-1.05%', percentChange: '-1.05%' },
+    ]
+};
+
+const initialWatchlist = [
+    { id: 's1', name: 'RELIANCE', price: '2,855.20', change: '+9.30', percentChange: '+0.33%', indicator: 'HOLD', aiConfidence: 75, open: '2860.00', high: '2868.50', low: '2842.00', prevClose: '2845.90', marketCap: '19.3T', volume: '3.5M', avgVolume: '4.1M', predictedRange: { min: '2,820', max: '2,900' }, fiiDii: { fii: '+150', dii: '+210' }, volumeAnalysis: 'Avg Volume', blockDeals: [], hasAlert: false },
+    { id: 's2', name: 'TCS', price: '4,018.80', change: '-6.35', percentChange: '-0.16%', indicator: 'HOLD', aiConfidence: 70, open: '4030.00', high: '4045.00', low: '4010.50', prevClose: '4025.15', marketCap: '14.5T', volume: '1.8M', avgVolume: '2.2M', predictedRange: { min: '3,980', max: '4,100' }, fiiDii: { fii: '-80', dii: '+120' }, volumeAnalysis: 'Below Avg Volume', blockDeals: ['JPM sold 80k shares @ 4022'], hasAlert: true },
+    { id: 's13', name: 'TATAMOTORS', price: '992.10', change: '+3.60', percentChange: '+0.36%', indicator: 'BUY', aiConfidence: 82, open: '988.00', high: '995.50', low: '985.00', prevClose: '988.50', marketCap: '3.3T', volume: '12.1M', avgVolume: '10.5M', predictedRange: { min: '970', max: '1020' }, fiiDii: { fii: '+250', dii: '+150' }, volumeAnalysis: 'High Volume', blockDeals: [], hasAlert: false },
+    { id: 's7', name: 'SBIN', price: '747.00', change: '-1.50', percentChange: '-0.20%', indicator: 'HOLD', aiConfidence: 68, open: '750.00', high: '752.80', low: '745.10', prevClose: '748.50', marketCap: '6.7T', volume: '15.2M', avgVolume: '18.0M', predictedRange: { min: '735', max: '765' }, fiiDii: { fii: '-120', dii: '+190' }, volumeAnalysis: 'Avg Volume', blockDeals: [], hasAlert: false },
+    { id: 's4', name: 'INFY', price: '1,578.50', change: '+6.20', percentChange: '+0.39%', indicator: 'HOLD', aiConfidence: 71, open: '1570.00', high: '1585.00', low: '1568.30', prevClose: '1572.30', marketCap: '6.5T', volume: '4.5M', avgVolume: '5.1M', predictedRange: { min: '1,550', max: '1,610' }, fiiDii: { fii: '+90', dii: '+60' }, volumeAnalysis: 'Below Avg Volume', blockDeals: [], hasAlert: false },
+];
+
+const allAvailableStocks = [
+    { id: 's1', name: 'RELIANCE', price: '2,855.20', change: '+9.30' },
+    { id: 's2', name: 'TCS', price: '4,018.80', change: '-6.35' },
+    { id: 's3', name: 'HDFCBANK', price: '1,668.00', change: '-2.45' },
+    { id: 's4', name: 'INFY', price: '1,578.50', change: '+6.20' },
+    { id: 's5', name: 'ICICIBANK', price: '1,054.10', change: '+1.40' },
+    { id: 's6', name: 'BHARTIARTL', price: '883.00', change: '+1.75' },
+    { id: 's7', name: 'SBIN', price: '747.00', change: '-1.50' },
+    { id: 's8', name: 'LICI', price: '908.00', change: '+3.00' },
+    { id: 's9', name: 'HINDUNILVR', price: '2,460.15', change: '+4.50' },
+    { id: 's10', name: 'ITC', price: '427.50', change: '-0.60' },
+    { id: 's11', name: 'BAJFINANCE', price: '7,140.00', change: '-10.50' },
+    { id: 's12', name: 'ADANIENT', price: '3,115.00', change: '+10.00' },
+    { id: 's13', name: 'TATAMOTORS', price: '992.10', change: '+3.60' },
+    { id: 's14', name: 'AXISBANK', price: '1083.20', change: '+3.10' },
+    { id: 's15', name: 'LT', price: '3555.00', change: '+4.25' },
+    { id: 's16', name: 'KOTAKBANK', price: '1845.00', change: '-5.20' },
+    { id: 's17', name: 'PAYTM', price: '410.50', change: '+19.55' },
+    { id: 's18', name: 'ZEEL', price: '145.80', change: '+11.50' },
+    { id: 's19', name: 'ZOMATO', price: '190.20', change: '+2.80' },
+    { id: 's20', name: 'IRFC', price: '140.75', change: '-2.20' },
+];
+
+const allAvailableIndices = [
+    { id: 'i1', name: 'NIFTY 50', price: '22,185.20', change: '+90.00' },
+    { id: 'i2', name: 'SENSEX', price: '73,110.80', change: '+341.43' },
+    { id: 'i3', name: 'BANK NIFTY', price: '46,590.50', change: '-173.90' },
+    { id: 'i4', name: 'NIFTY IT', price: '33,780.10', change: '+129.30' },
+    { id: 'i5', name: 'NIFTY AUTO', price: '16,010.90', change: '+60.50' },
+    { id: 'i6', name: 'NIFTY PHARMA', price: '14,200.50', change: '+20.55' },
+    { id: 'i7', name: 'NIFTY FMCG', price: '48,300.10', change: '+76.50' },
+    { id: 'i8', name: 'NIFTY MIDCAP 100', price: '38,750.80', change: '+50.60' },
+    { id: 'i9', name: 'NIFTY SMALLCAP 100', price: '12,520.00', change: '+19.50' },
+    { id: 'i10', name: 'INDIA VIX', price: '14.50', change: '+0.85' }
+];
+
+const initialAppSettings = {
+    stockAlerts: true,
+    newsAlerts: true,
+    aiAlerts: false,
+    watchlistAlerts: true,
+    popupAlerts: true,
+};
+
+// --- Helper Functions --- (Remain the same)
+function formatNumberString(numStr) {
+    if (!numStr) return '-';
+    const num = parseFloat(String(numStr).replace(/,/g, ''));
+    if (isNaN(num)) return numStr;
+    return num.toLocaleString('en-IN');
+}
+
+function parseChange(changeStr) {
+    if (!changeStr) return { value: 0, isPositive: true };
+    const value = parseFloat(String(changeStr).replace(/[+,%]/g, ''));
+    const isPositive = !String(changeStr).startsWith('-');
+    return { value: isNaN(value) ? 0 : value, isPositive };
+}
+
+function getChangeClass(changeStr) {
+    const { isPositive, value } = parseChange(changeStr);
+    if (value === 0) return '';
+    return isPositive ? 'change-up' : 'change-down';
+}
+
+function formatMarketCap(marketCapStr) {
+    return marketCapStr ? ${marketCapStr} : '-';
+}
+
+function formatVolume(volumeStr) {
+    if (!volumeStr) return '-';
+    return volumeStr;
+}
+
+function getIndicatorClass(indicator) {
+    return indicator?.toLowerCase() || 'hold';
+}
+
+// Calculate Percentage Change Helper
+const calculatePercentChange = (priceStr, changeStr) => {
+    const price = parseFloat(String(priceStr).replace(/,/g, ''));
+    if (!changeStr || isNaN(price) || price === 0) return '+0.00%';
+
+    const changeInfo = parseChange(changeStr);
+    const changeValue = changeInfo.isPositive ? changeInfo.value : -changeInfo.value;
+    if (isNaN(changeValue)) return '+0.00%';
+
+    if (String(changeStr).includes('%')) {
+        return (changeValue >= 0 ? '+' : '') + Math.abs(changeValue).toFixed(2) + '%';
+    }
+
+    const originalPrice = price - changeValue;
+    if (originalPrice === 0 || isNaN(originalPrice)) return (changeValue >= 0 ? '+' : '') + 'N/A';
+
+    const percent = (changeValue / originalPrice) * 100;
+    return (percent >= 0 ? '+' : '') + percent.toFixed(2) + '%';
+};
+
+
+// --- Main App Component ---
+function App() {
+    // --- State ---
+    const [theme, setTheme] = useState('light');
+    const [isProfilePanelOpen, setIsProfilePanelOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [isListModalOpen, setIsListModalOpen] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ type: '', title: '', availableItems: [] });
+    const [modalSearchTerm, setModalSearchTerm] = useState('');
+    const [isModalLoading, setIsModalLoading] = useState(false);
+    const [watchlistData, setWatchlistData] = useState(initialWatchlist);
+    const [indicesData, setIndicesData] = useState(initialIndices);
+    const [trendingData, setTrendingData] = useState(initialTrendingStocks);
+    const [marketMoversData, setMarketMoversData] = useState(initialMarketMovers);
+    const [activeMoversTab, setActiveMoversTab] = useState('gainers');
+    const [watchlistSortCriteria, setWatchlistSortCriteria] = useState('default');
+    const [expandedStockId, setExpandedStockId] = useState(null);
+    const [appSettings, setAppSettings] = useState(initialAppSettings);
+    const [notification, setNotification] = useState({ visible: false, message: '', type: 'info' });
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [marketSummary, setMarketSummary] = useState(initialMarketSummary);
+    // REMOVED: const [priceFlashMap, setPriceFlashMap] = useState({});
+    const [activeAlerts, setActiveAlerts] = useState({});
+    const [alertInputValues, setAlertInputValues] = useState({});
+
+    // Refs
+    const notificationTimeoutRef = useRef(null);
+    const profilePanelRef = useRef(null);
+    const profileBtnRef = useRef(null);
+
+    // --- Effects ---
+
+    // Theme Management
+    useEffect(() => {
+        document.body.classList.remove('preload');
+        document.body.classList.toggle('dark', theme === 'dark');
+    }, [theme]);
+
+    // REMOVED: useEffect for simulating data updates and price flashing
+
+     // Simple alert check effect (triggered when data changes, which won't happen automatically now)
+     // You might want to trigger this check differently if data updates come from elsewhere
+     useEffect(() => {
+        watchlistData.forEach(item => {
+             const alertPrice = activeAlerts[item.id];
+             const currentPrice = parseFloat(String(item.price).replace(/,/g, ''));
+             if (alertPrice && appSettings.stockAlerts && appSettings.popupAlerts && !isNaN(currentPrice)) {
+                 const numericAlertPrice = parseFloat(String(alertPrice).replace(/,/g, ''));
+                 if (!isNaN(numericAlertPrice)) {
+                     // Basic check if price is currently at or beyond the alert level
+                     // This won't trigger on crossing the threshold anymore without price updates
+                     if ((item.change.startsWith('+') && currentPrice >= numericAlertPrice) ||
+                         (item.change.startsWith('-') && currentPrice <= numericAlertPrice)) {
+                          // Consider if you want alerts to trigger just by being beyond the threshold on load/refresh
+                          // showNotification(${item.name} is at or beyond alert price ${alertPrice}!, 'warning');
+                     }
+                 }
+             }
+        });
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+     }, [watchlistData, activeAlerts, appSettings.stockAlerts, appSettings.popupAlerts]); // Check when data or alerts change
+
+
+    // Close profile panel on outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isProfilePanelOpen &&
+                profilePanelRef.current &&
+                !profilePanelRef.current.contains(event.target) &&
+                profileBtnRef.current &&
+                !profileBtnRef.current.contains(event.target))
+             {
+                setIsProfilePanelOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isProfilePanelOpen]);
+
+    // Auto-hide notification
+    useEffect(() => {
+        if (notification.visible) {
+            clearTimeout(notificationTimeoutRef.current);
+            notificationTimeoutRef.current = setTimeout(() => {
+                setNotification(prev => ({ ...prev, visible: false }));
+            }, 5000);
+        }
+        return () => clearTimeout(notificationTimeoutRef.current);
+    }, [notification]);
+
+    // --- Event Handlers ---
+
+    const showNotification = useCallback((message, type = 'info') => {
+        // Only show if popups enabled in settings, or if it's an error
+        if(appSettings.popupAlerts || type === 'danger') {
+            setNotification({ visible: true, message, type });
+        }
+    }, [appSettings.popupAlerts]); // Depend on settings
+
+    const toggleTheme = useCallback(() => {
+        setTheme(prevTheme => {
+            const newTheme = prevTheme === 'light' ? 'dark' : 'light';
+            showNotification(Theme switched to ${newTheme === 'dark' ? 'Dark' : 'Light'}, 'info');
+            return newTheme;
+        });
+    }, [showNotification]); // Removed theme dependency as it's calculated inside
+
+    const toggleProfilePanel = useCallback(() => {
+        setIsProfilePanelOpen(prev => !prev);
+    }, []);
+
+    const handleLogout = useCallback(() => {
+        setIsProfilePanelOpen(false);
+        showNotification('Logged out successfully', 'success');
+    }, [showNotification]); // Add dependency
+
+    const handleRefresh = useCallback(() => {
+        if (isRefreshing) return;
+        setIsRefreshing(true);
+        showNotification('Refreshing data...', 'info');
+        setTimeout(() => {
+            // Simulate fetching static initial data again or shuffle
+            setWatchlistData([...initialWatchlist].sort(() => Math.random() - 0.5)); // Shuffle example
+            setIndicesData([...initialIndices]);
+            setTrendingData([...initialTrendingStocks]);
+            setMarketMoversData(initialMarketMovers);
+            setMarketSummary(prev => ({ ...prev, text: "Market data refreshed."}))
+            setIsRefreshing(false);
+            showNotification('Data refreshed!', 'success');
+        }, 1000); // Shorter delay
+    }, [isRefreshing, showNotification]); // Add dependency
+
+    const hideNotification = useCallback(() => {
+        setNotification(prev => ({ ...prev, visible: false }));
+    }, []);
+
+    const openSettingsModal = useCallback(() => {
+        setIsSettingsModalOpen(true);
+        setIsProfilePanelOpen(false);
+    }, []);
+
+    const closeSettingsModal = useCallback(() => {
+        setIsSettingsModalOpen(false);
+    }, []);
+
+    const openListModal = useCallback((type) => {
+        let config = {};
+        setIsModalLoading(true);
+        setIsListModalOpen(true);
+        setModalSearchTerm('');
+
+        // Simulate loading available items (no network delay needed now)
+        if (type === 'stock') {
+            config = { type: 'stock', title: 'Add Stock to Watchlist', availableItems: allAvailableStocks };
+        } else if (type === 'index') {
+            config = { type: 'index', title: 'Add Index', availableItems: allAvailableIndices };
+        } else {
+            console.error("Unknown modal type:", type);
+            closeListModal();
+            return;
+        }
+        setModalConfig(config);
+        setIsModalLoading(false); // Set loading false immediately
+
+    }, []); // Removed closeListModal dependency
+
+    const closeListModal = useCallback(() => {
+        setIsListModalOpen(false);
+        setModalConfig({ type: '', title: '', availableItems: [] });
+        setModalSearchTerm('');
+        setIsModalLoading(false);
+    }, []);
+
+    const handleModalSearchChange = useCallback((event) => {
+        setModalSearchTerm(event.target.value);
+    }, []);
+
+    // handleAddItem remains largely the same, but recalculate % change if needed
+     const handleAddItem = useCallback((itemToAdd) => {
+        const { type } = modalConfig;
+        let alreadyExists = false;
+        let newItem;
+
+        if (type === 'stock') {
+            alreadyExists = watchlistData.some(item => item.id === itemToAdd.id);
+            if (!alreadyExists) {
+                const fullStockData = allAvailableStocks.find(s => s.id === itemToAdd.id) || itemToAdd;
+                 newItem = {
+                    id: fullStockData.id,
+                    name: fullStockData.name,
+                    price: fullStockData.price || 'N/A',
+                    change: fullStockData.change || '+0.00',
+                    percentChange: calculatePercentChange(fullStockData.price, fullStockData.change), // Recalculate just in case
+                    indicator: 'HOLD', aiConfidence: 50, open: 'N/A', high: 'N/A', low: 'N/A', prevClose: 'N/A', marketCap: 'N/A', volume: 'N/A', avgVolume: 'N/A',
+                    predictedRange: { min: 'N/A', max: 'N/A' }, fiiDii: { fii: 'N/A', dii: 'N/A' }, volumeAnalysis: 'N/A', blockDeals: [], hasAlert: false
+                 };
+                setWatchlistData(prev => [newItem, ...prev]);
+            }
+        } else if (type === 'index') {
+             alreadyExists = indicesData.some(item => item.id === itemToAdd.id);
+             if (!alreadyExists) {
+                 const fullIndexData = allAvailableIndices.find(i => i.id === itemToAdd.id) || itemToAdd;
+                 newItem = {
+                     id: fullIndexData.id,
+                     name: fullIndexData.name,
+                     price: fullIndexData.price || 'N/A',
+                     change: fullIndexData.change || '+0.00',
+                     percentChange: calculatePercentChange(fullIndexData.price, fullIndexData.change),
+                 };
+                 setIndicesData(prev => [newItem, ...prev]);
+             }
+        }
+
+        if (alreadyExists) {
+            showNotification(${itemToAdd.name} is already in the list., 'warning');
+        } else if (newItem) {
+             showNotification(${itemToAdd.name} added successfully., 'success');
+        }
+
+    }, [modalConfig, watchlistData, indicesData, showNotification]); // Add dependencies
+
+
+    const handleWatchlistSortChange = useCallback((event) => {
+        setWatchlistSortCriteria(event.target.value);
+    }, []);
+
+    const toggleWatchlistItemExpand = useCallback((stockId) => {
+        setExpandedStockId(prevId => (prevId === stockId ? null : stockId));
+    }, []);
+
+    const handleMoversTabClick = useCallback((tabName) => {
+        setActiveMoversTab(tabName);
+    }, []);
+
+    const handleSettingChange = useCallback((settingKey, value) => {
+        if (settingKey === 'theme') {
+            setTheme(value); // Handle theme change specifically if needed elsewhere
+        }
+        setAppSettings(prev => ({ ...prev, [settingKey]: value }));
+
+        if (typeof value === 'boolean') {
+             showNotification(${settingKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} ${value ? 'enabled' : 'disabled'}., 'info');
+        } else if (settingKey === 'theme') {
+            // Notification for theme is handled in toggleTheme or directly here
+            // showNotification(Theme set to ${value}, 'info');
+        }
+    }, [showNotification]);
+
+     // Alert Handling (Remains the same logic, but triggers less often)
+    const handleAlertInputChange = useCallback((stockId, value) => {
+        setAlertInputValues(prev => ({ ...prev, [stockId]: value }));
+    }, []);
+
+    const handleSetAlert = useCallback((stockId) => {
+        const targetPrice = alertInputValues[stockId];
+        const stock = watchlistData.find(s => s.id === stockId);
+        if (targetPrice && !isNaN(parseFloat(String(targetPrice).replace(/,/g, ''))) && stock) {
+            setActiveAlerts(prev => ({ ...prev, [stockId]: targetPrice }));
+            setAlertInputValues(prev => ({ ...prev, [stockId]: '' }));
+            setWatchlistData(prevData => prevData.map(s => s.id === stockId ? { ...s, hasAlert: true } : s));
+            showNotification(Alert set for ${stock.name} at ${targetPrice}, 'success');
+        } else {
+            showNotification(Invalid price entered for ${stock?.name || 'stock'}., 'danger');
+        }
+    }, [alertInputValues, watchlistData, showNotification]);
+
+    const handleRemoveAlert = useCallback((stockId) => {
+        const stock = watchlistData.find(s => s.id === stockId);
+        setActiveAlerts(prev => {
+            const newAlerts = { ...prev };
+            delete newAlerts[stockId];
+            return newAlerts;
+        });
+         setWatchlistData(prevData => prevData.map(s => s.id === stockId ? { ...s, hasAlert: false } : s));
+        showNotification(Alert removed for ${stock?.name || 'stock'}, 'info');
+    }, [watchlistData, showNotification]);
+
+
+    // --- Memoized Derived State --- (Remains the same)
+    const sortedWatchlist = useMemo(() => {
+        let sorted = [...watchlistData];
+        switch (watchlistSortCriteria) {
+            // Sorting cases remain the same
+            case 'name-asc':
+                sorted.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'name-desc':
+                sorted.sort((a, b) => b.name.localeCompare(a.name));
+                break;
+            case 'change-desc':
+                sorted.sort((a, b) => {
+                    const changeA = parseFloat(String(a.percentChange || '0').replace(/[+%]/g, ''));
+                    const changeB = parseFloat(String(b.percentChange || '0').replace(/[+%]/g, ''));
+                    return (isNaN(changeB) ? -Infinity : changeB) - (isNaN(changeA) ? -Infinity : changeA);
+                });
+                break;
+             case 'change-asc':
+                sorted.sort((a, b) => {
+                    const changeA = parseFloat(String(a.percentChange || '0').replace(/[+%]/g, ''));
+                    const changeB = parseFloat(String(b.percentChange || '0').replace(/[+%]/g, ''));
+                    return (isNaN(changeA) ? Infinity : changeA) - (isNaN(changeB) ? Infinity : changeB);
+                 });
+                break;
+            case 'confidence-desc':
+                sorted.sort((a, b) => (b.aiConfidence || 0) - (a.aiConfidence || 0));
+                break;
+            case 'default':
+            default:
+                break;
+        }
+        return sorted;
+    }, [watchlistData, watchlistSortCriteria]);
+
+    const filteredModalItems = useMemo(() => {
+        if (!modalSearchTerm) return modalConfig.availableItems;
+        const lowerSearchTerm = modalSearchTerm.toLowerCase();
+        return modalConfig.availableItems.filter(item =>
+            item.name.toLowerCase().includes(lowerSearchTerm) ||
+            (item.id && item.id.toLowerCase().includes(lowerSearchTerm))
+        );
+    }, [modalConfig.availableItems, modalSearchTerm]);
+
+    const currentMovers = useMemo(() => {
+        return marketMoversData[activeMoversTab] || [];
+    }, [marketMoversData, activeMoversTab]);
+
+    // --- Helper function for rendering Change Pill (Flash class removed) ---
+    const renderChangePill = (changeStr, percentChangeStr) => { // Removed id param
+         const changeClass = getChangeClass(changeStr);
+         // REMOVED: const flashClass = priceFlashMap[id] ? price-flash-${priceFlashMap[id]} : '';
+         const displayChange = changeStr.includes('%') ? changeStr : ${changeStr} (${percentChangeStr || 'N/A'});
+
+         return (
+             <span className={change-pill ${changeClass}}> {/* Removed flashClass */}
+                 {displayChange}
+             </span>
+         );
+    };
+
+
+    // --- Render ---
+    return (
+        <>
+            {/* Header, Profile Panel, Modals, Toast remain structurally the same */}
+            {/* --- Header --- */}
+            <header className="header">
+                <div className="header-left">
+                    <button
+                        ref={profileBtnRef}
+                        className="profile-btn"
+                        onClick={toggleProfilePanel}
+                        aria-label="Open Profile Panel"
+                        title="Profile"
+                        aria-expanded={isProfilePanelOpen}
+                    >
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&q=80" alt="Profile Avatar" className="avatar" />
+                    </button>
+                    <div className="search-container">
+                        <input type="text" placeholder="Search stocks, indices..." className="search-input" aria-label="Search Stocks & Indices" />
+                        <Search className="search-icon" size={18} />
+                        <button className="voice-btn" aria-label="Voice Search" title="Voice Search (Not Implemented)" onClick={() => showNotification('Voice search not implemented yet.', 'info')}>
+                            <Mic size={18} />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="header-right">
+                    <button className="settings-entry-btn" onClick={openSettingsModal} aria-label="Open Settings" title="Settings">
+                        <Settings size={20} />
+                    </button>
+                    <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle Theme" title="Toggle Theme">
+                        {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                    </button>
+                    <button className="notification-btn" aria-label="Show Notifications" title="Notifications (Not Implemented)" onClick={() => showNotification('Notification panel not implemented yet.', 'info')}>
+                        <Bell size={20} />
+                    </button>
+                    <button
+                        className={refresh-btn ${isRefreshing ? 'loading' : ''}}
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        aria-label="Refresh Data"
+                        title="Refresh Data"
+                    >
+                        <RotateCw size={20} />
+                    </button>
+                </div>
+            </header>
+
+            {/* --- Profile Panel --- */}
+            <div ref={profilePanelRef} className={profile-panel ${isProfilePanelOpen ? 'visible' : ''}} >
+                 <div className="profile-header">
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&q=80" alt="Profile Avatar Large" className="profile-avatar"/>
+                    <div className="profile-user-info">
+                        <h3>John Doe</h3>
+                        <p>john.doe@example.com</p>
+                    </div>
+                 </div>
+                 <nav className="profile-nav">
+                    <a className="profile-nav-link" onClick={() => {showNotification('Edit Profile clicked', 'info'); setIsProfilePanelOpen(false);}}>
+                       <User size={16}/> Edit Profile
+                    </a>
+                     <a className="profile-nav-link" onClick={() => {showNotification('Change Password clicked', 'info'); setIsProfilePanelOpen(false);}}>
+                       <Lock size={16}/> Change Password
+                    </a>
+                    <a className="profile-nav-link" onClick={() => {showNotification('View Privacy clicked', 'info'); setIsProfilePanelOpen(false);}}>
+                        <Shield size={16}/> Privacy Policy
+                    </a>
+                    <a className="profile-nav-link" onClick={() => { openSettingsModal(); setIsProfilePanelOpen(false); }}>
+                       <Settings2 size={16}/> App Settings
+                    </a>
+                 </nav>
+                 <div className="profile-actions">
+                    <button className="logout-btn" onClick={handleLogout}>
+                        <LogOut size={16}/>
+                        <span>Logout</span>
+                    </button>
+                 </div>
+            </div>
+
+            {/* --- Main Content Area --- */}
+            <main className="container">
+                <div className="main-content">
+                    {/* AI Summary Section */}
+                    <section className="ai-summary-section card">
+                        <div className="section-header">
+                            <Brain className="icon-purple" size={20}/>
+                            <h2>AI Market Summary {marketSummary.sentiment === 'positive' && <span className="sentiment-flame">🔥</span>}</h2>
+                        </div>
+                        <p>{marketSummary.text}</p>
+                        <div className="market-breadth-placeholder">
+                            <span className="breadth-label">Breadth:</span>
+                            <span className="advances"><ArrowUp size={14}/> {marketSummary.breadth.advances}</span>
+                            <span className="declines"><ArrowDown size={14}/> {marketSummary.breadth.declines}</span>
+                            <span className="unchanged"><Minus size={14}/> {marketSummary.breadth.unchanged}</span>
+                        </div>
+                    </section>
+
+                    {/* Watchlist Section */}
+                    <section className="watchlist-section">
+                        <div className="section-header-main">
+                            <h2><List className="icon-subtle" size={22}/> My Watchlist</h2>
+                            <div className="watchlist-controls">
+                                <label htmlFor="sortWatchlist" className="sr-only">Sort by:</label>
+                                <select
+                                    id="sortWatchlist"
+                                    className="sort-dropdown"
+                                    aria-label="Sort Watchlist"
+                                    value={watchlistSortCriteria}
+                                    onChange={handleWatchlistSortChange}
+                                >
+                                    <option value="default">Default Order</option>
+                                    <option value="name-asc">Name (A-Z)</option>
+                                    <option value="name-desc">Name (Z-A)</option>
+                                    <option value="change-desc">Change % (High-Low)</option>
+                                    <option value="change-asc">Change % (Low-High)</option>
+                                    <option value="confidence-desc">AI Confidence (High-Low)</option>
+                                </select>
+                                <button className="add-btn green" onClick={() => openListModal('stock')}>
+                                    <Plus size={16}/> Add Stock
+                                </button>
+                            </div>
+                        </div>
+                        <div className="watchlist-items">
+                            {watchlistData.length === 0 ? (
+                                <div className="loading-placeholder">Your watchlist is empty. Add some stocks!</div>
+                            ) : (
+                                sortedWatchlist.map(stock => (
+                                    <WatchlistItem
+                                        key={stock.id}
+                                        stock={stock}
+                                        isExpanded={expandedStockId === stock.id}
+                                        onToggleExpand={toggleWatchlistItemExpand}
+                                        renderChangePill={renderChangePill}
+                                        // priceFlashClass prop removed
+                                        activeAlertPrice={activeAlerts[stock.id]}
+                                        onSetAlert={handleSetAlert}
+                                        onRemoveAlert={handleRemoveAlert}
+                                        alertInputValue={alertInputValues[stock.id] || ''}
+                                        onAlertInputChange={handleAlertInputChange}
+                                    />
+                                ))
+                            )}
+                        </div>
+                    </section>
+                </div>
+
+                {/* --- Sidebar --- */}
+                <aside className="sidebar">
+                     {/* Indices Section */}
+                    <section className="indices-section card">
+                        <div className="section-header-main">
+                             <h2><LineChart className="icon-subtle" size={20}/> Indices</h2>
+                            <button className="add-btn small icon-only" title="Add Index" onClick={() => openListModal('index')}>
+                                <Plus size={16}/>
+                            </button>
+                        </div>
+                        <div className="indices-list">
+                            {indicesData.length === 0 ? (
+                                 <div className="loading-placeholder">No indices added.</div>
+                            ) : (
+                                indicesData.map(index => (
+                                    <div key={index.id} className="index-item"> {/* Removed flash class */}
+                                        <div>
+                                             <h3>{index.name}</h3>
+                                            <span className="price-container">{formatNumberString(index.price)}</span>
+                                        </div>
+                                        {renderChangePill(index.change, index.percentChange)} {/* Removed id */}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </section>
+
+                     {/* Trending Stocks Section */}
+                    <section className="trending-section card">
+                         <div className="section-header">
+                            <TrendingUp className="icon-purple" size={20}/>
+                            <h2>Trending Stocks <span className="sentiment-rocket">🚀</span></h2>
+                        </div>
+                        <div className="trending-list">
+                            {trendingData.length === 0 ? (
+                                 <div className="loading-placeholder">Loading trending...</div>
+                            ) : (
+                                trendingData.map(stock => (
+                                    <div key={stock.name} className="trending-item"> {/* Removed flash class */}
+                                        <div>
+                                             <span className="trending-name">{stock.name}</span>
+                                            <span className="price-container">{formatNumberString(stock.price)}</span>
+                                        </div>
+                                         {renderChangePill(stock.change, stock.percentChange)} {/* Removed id */}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </section>
+
+                     {/* Market Movers Section */}
+                    <section className="market-movers-section card">
+                        <div className="section-header">
+                            <Move className="icon-subtle" size={20}/>
+                            <h2>Market Movers</h2>
+                        </div>
+                        <div className="market-movers-tabs">
+                            <button
+                                className={tab-btn ${activeMoversTab === 'gainers' ? 'active' : ''}}
+                                onClick={() => handleMoversTabClick('gainers')}
+                            >
+                                Top Gainers
+                            </button>
+                            <button
+                                className={tab-btn ${activeMoversTab === 'losers' ? 'active' : ''}}
+                                onClick={() => handleMoversTabClick('losers')}
+                            >
+                                Top Losers
+                            </button>
+                        </div>
+                        <div className="market-movers-content">
+                            {currentMovers.length === 0 ? (
+                                 <div className="loading-placeholder">Loading movers...</div>
+                            ) : (
+                                currentMovers.map(mover => (
+                                    <div key={mover.name} className="mover-item">
+                                        <span className="name">{mover.name}</span>
+                                        <span className={change ${getChangeClass(mover.change)}}> {/* Removed flash class */}
+                                            {mover.percentChange || mover.change}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </section>
+                </aside>
+            </main>
+
+             {/* --- List Modal --- */}
+             <div className={modal ${isListModalOpen ? 'visible' : ''}}>
+                 <div className="modal-overlay" onClick={closeListModal}></div>
+                 <div className="modal-content">
+                    <div className="modal-header">
+                        <h2>{modalConfig.title}</h2> {/* Removed id */}
+                        <button className="modal-close-btn" aria-label="Close modal" onClick={closeListModal}>
+                           <X size={20}/>
+                        </button>
+                    </div>
+                    <div className="modal-search">
+                         <input
+                            type="text"
+                            placeholder="Search..."
+                            id="modalSearch"
+                            aria-label="Search items to add"
+                            value={modalSearchTerm}
+                            onChange={handleModalSearchChange}
+                         />
+                        <Search size={18}/>
+                    </div>
+                    <div className="modal-list-container">
+                        {isModalLoading ? (
+                            <div className="modal-loading">
+                                <p><RotateCw className="spin" size={20}/> Loading items...</p>
+                            </div>
+                         ) : filteredModalItems.length === 0 ? (
+                            <div className="modal-empty">
+                                <p><Search size={20}/> No items found.</p>
+                            </div>
+                        ) : (
+                            <div className="modal-items">
+                                {filteredModalItems.map(item => {
+                                     const isAdded = modalConfig.type === 'stock'
+                                        ? watchlistData.some(w => w.id === item.id)
+                                        : indicesData.some(i => i.id === item.id);
+                                     return (
+                                         <div key={item.id || item.name} className="flex">
+                                             <div className="modal-item-info">
+                                                 <h3>{item.name}</h3>
+                                                 <p>{item.price} ({item.change})</p>
+                                             </div>
+                                             <button
+                                                 className="add-item-btn"
+                                                 onClick={() => handleAddItem(item)}
+                                                 disabled={isAdded}
+                                                 title={isAdded ? 'Already Added' : Add ${item.name}}
+                                              >
+                                                {isAdded ? <Check size={20} className="lucide-check" /> : <Plus size={20} />}
+                                             </button>
+                                         </div>
+                                     );
+                                 })}
+                            </div>
+                        )}
+                    </div>
+                 </div>
+            </div>
+
+            {/* --- Settings Modal --- */}
+            <div className={modal settings-modal ${isSettingsModalOpen ? 'visible' : ''}}>
+                <div className="modal-overlay" onClick={closeSettingsModal}></div>
+                <div className="modal-content">
+                     <div className="modal-header">
+                        <h2><Settings size={20}/> Settings</h2>
+                        <button className="modal-close-btn" aria-label="Close settings" onClick={closeSettingsModal}>
+                            <X size={20}/>
+                        </button>
+                    </div>
+                    <div className="settings-sections">
+                        {/* Sections remain the same */}
+                        <div className="settings-section">
+                             <h3><User size={18}/> Profile</h3>
+                              <div className="setting-item">
+                                <label>Edit Profile Info</label>
+                                <button className="btn btn-secondary btn-sm" onClick={() => showNotification('Edit Profile clicked', 'info')}>Edit</button>
+                            </div>
+                             <div className="setting-item">
+                                <label>Change Password</label>
+                                <button className="btn btn-secondary btn-sm" onClick={() => showNotification('Change Password clicked', 'info')}>Change</button>
+                            </div>
+                             <div className="setting-item">
+                                <label>Privacy Policy</label>
+                                <button className="btn btn-link btn-sm" onClick={() => showNotification('View Privacy clicked', 'info')}>View</button>
+                            </div>
+                        </div>
+                        <div className="settings-section">
+                            <h3><Bell size={18}/> Notifications</h3>
+                             <SettingsToggleItem id="toggleStockAlerts" label="Stock Price Alerts" icon={BarChart2} isChecked={appSettings.stockAlerts} onChange={(e) => handleSettingChange('stockAlerts', e.target.checked)} />
+                            <SettingsToggleItem id="toggleNewsAlerts" label="Market News" icon={Newspaper} isChecked={appSettings.newsAlerts} onChange={(e) => handleSettingChange('newsAlerts', e.target.checked)} />
+                            <SettingsToggleItem id="toggleAiAlerts" label="AI Suggestions" icon={Lightbulb} isChecked={appSettings.aiAlerts} onChange={(e) => handleSettingChange('aiAlerts', e.target.checked)} />
+                            <SettingsToggleItem id="toggleWatchlistAlerts" label="Watchlist Updates" icon={ListChecks} isChecked={appSettings.watchlistAlerts} onChange={(e) => handleSettingChange('watchlistAlerts', e.target.checked)} />
+                            <SettingsToggleItem id="togglePopupAlerts" label="In-App Popups" icon={MessageSquare} isChecked={appSettings.popupAlerts} onChange={(e) => handleSettingChange('popupAlerts', e.target.checked)} />
+                        </div>
+                        <div className="settings-section">
+                            <h3><Palette size={18}/> Appearance</h3>
+                             <div className="setting-item">
+                                <label>Theme</label>
+                                <div className="theme-selector">
+                                     <button
+                                        className={btn btn-sm theme-option ${theme === 'light' ? 'active' : ''}}
+                                        onClick={() => handleSettingChange('theme', 'light')}
+                                        data-theme="light"
+                                     >
+                                        <Sun size={14}/> Light
+                                    </button>
+                                    <button
+                                        className={btn btn-sm theme-option ${theme === 'dark' ? 'active' : ''}}
+                                        onClick={() => handleSettingChange('theme', 'dark')}
+                                        data-theme="dark"
+                                    >
+                                        <Moon size={14}/> Dark
+                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+
+             {/* --- Notification Toast --- */}
+             <div className={notification-toast ${notification.visible ? 'visible' : ''} toast-${notification.type}}>
+                {notification.type === 'info' && <Info size={18} className="toast-icon"/>}
+                {notification.type === 'success' && <Check size={18} className="toast-icon"/>}
+                {notification.type === 'warning' && <AlertCircle size={18} className="toast-icon"/>}
+                {notification.type === 'danger' && <X size={18} className="toast-icon"/>}
+                <p>{notification.message}</p>
+                <button className="toast-close-btn" aria-label="Close notification" onClick={hideNotification}>
+                    <X size={16}/>
+                </button>
+            </div>
+        </>
+    );
+}
+
+
+// --- Sub-Components ---
+
+// Watchlist Item Component (Removed priceFlashClass prop)
+function WatchlistItem({ stock, isExpanded, onToggleExpand, renderChangePill, activeAlertPrice, onSetAlert, onRemoveAlert, alertInputValue, onAlertInputChange }) {
+
+    const handleAlertSubmit = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onSetAlert(stock.id);
+    };
+
+    const handleRemoveAlertClick = (e) => {
+        e.stopPropagation();
+        onRemoveAlert(stock.id);
+    };
+
+     const handleInputChange = (e) => {
+        e.stopPropagation();
+        onAlertInputChange(stock.id, e.target.value);
+    };
+
+    return (
+        <div className="watchlist-item">
+            <div
+                className={watchlist-header ${isExpanded ? 'expanded' : ''} ${activeAlertPrice ? 'has-alert' : ''}} // Removed flash class
+                onClick={() => onToggleExpand(stock.id)}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
+            >
+                <span className="expand-icon" aria-hidden="true">
+                    {isExpanded ? <ChevronUp size={18} style={{ transform: 'none'}} /> : <ChevronDown size={18} style={{ transform: 'none'}}/>}
+                </span>
+                <div className="watchlist-info">
+                    <span className="watchlist-name">{stock.name}</span>
+                </div>
+                <div className="watchlist-price">{formatNumberString(stock.price)}</div>
+                <div className="watchlist-change">
+                    {renderChangePill(stock.change, stock.percentChange)} {/* Removed id */}
+                </div>
+                <div className="watchlist-indicator-ai">
+                    <span className={stock-indicator ${getIndicatorClass(stock.indicator)}}>{stock.indicator || 'HOLD'}</span>
+                    <div className="ai-confidence-display" title={AI Confidence: ${stock.aiConfidence || 0}%}>
+                        AI:
+                        <div className="confidence-bar-container">
+                            <div className="confidence-bar" style={{ width: ${stock.aiConfidence || 0}% }}></div>
+                        </div>
+                         {stock.aiConfidence || 0}%
+                    </div>
+                </div>
+            </div>
+             {/* Watchlist Details */}
+             <div className={watchlist-details ${isExpanded ? 'visible' : ''}}>
+                 {isExpanded && (
+                    <div className="watchlist-details-content">
+                        {/* Sections remain the same */}
+                        <div className="details-grid-group">
+                            <h4><BarChart2 size={14}/> Key Stats</h4>
+                            <p><span className="details-label">Open:</span> <span className="details-value">{formatNumberString(stock.open)}</span></p>
+                            <p><span className="details-label">High:</span> <span className="details-value">{formatNumberString(stock.high)}</span></p>
+                            <p><span className="details-label">Low:</span> <span className="details-value">{formatNumberString(stock.low)}</span></p>
+                            <p><span className="details-label">Prev Close:</span> <span className="details-value">{formatNumberString(stock.prevClose)}</span></p>
+                        </div>
+                        <div className="details-grid-group">
+                            <h4><Info size={14}/> Market Info</h4>
+                            <p><span className="details-label">Market Cap:</span> <span className="details-value">{formatMarketCap(stock.marketCap)}</span></p>
+                            <p><span className="details-label">Volume:</span> <span className="details-value">{formatVolume(stock.volume)}</span></p>
+                            <p><span className="details-label">Avg Volume:</span> <span className="details-value">{formatVolume(stock.avgVolume)}</span></p>
+                            <p><span className="details-label">Volume:</span> <span className="details-value">{stock.volumeAnalysis || '-'}</span></p>
+                        </div>
+                        <div className="details-grid-group">
+                            <h4><Brain size={14}/> AI & Flow</h4>
+                            <p><span className="details-label">AI Range:</span> <span className="details-value">{stock.predictedRange?.min || '-'} to {stock.predictedRange?.max || '-'}</span></p>
+                             <div className="fii-dii-data">
+                                <p><span className="details-label">FII/DII Flow:</span></p>
+                                <span className={parseChange(stock.fiiDii?.fii).isPositive ? 'fii-positive' : 'fii-negative'}>
+                                    <ArrowUp size={12}/> FII: {stock.fiiDii?.fii || '-'} Cr
+                                </span>
+                                 <span className={parseChange(stock.fiiDii?.dii).isPositive ? 'dii-positive' : 'dii-negative'}>
+                                    <ArrowDown size={12}/> DII: {stock.fiiDii?.dii || '-'} Cr
+                                </span>
+                            </div>
+                        </div>
+                         {(stock.blockDeals && stock.blockDeals.length > 0) && (
+                            <div className="details-grid-group" style={{gridColumn: '1 / -1'}}>
+                                <h4><ListChecks size={14}/> Block Deals</h4>
+                                <ul className="block-deals-list">
+                                    {stock.blockDeals.map((deal, index) => <li key={index}>{deal}</li>)}
+                                </ul>
+                            </div>
+                         )}
+                         <div className="alert-section">
+                             <h5><Bell size={14}/> Price Alert</h5>
+                            {activeAlertPrice ? (
+                                <>
+                                    <p className="alert-active" style={{ flexBasis: 'auto', marginRight: '10px' }}>Active Alert @ {activeAlertPrice}</p>
+                                     <button className="btn btn-secondary btn-sm" onClick={handleRemoveAlertClick}>Remove</button>
+                                </>
+                            ) : (
+                                <>
+                                     <input
+                                        type="number"
+                                        step="any"
+                                        placeholder="Target Price"
+                                        className="alert-target-price"
+                                        id={alert-${stock.id}}
+                                        value={alertInputValue}
+                                        onChange={handleInputChange}
+                                        onClick={e => e.stopPropagation()}
+                                     />
+                                     <button className="btn btn-primary btn-sm" onClick={handleAlertSubmit}>Set</button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+
+// Settings Toggle Item Component (Remains the same)
+function SettingsToggleItem({ id, label, icon: Icon, isChecked, onChange }) {
+    return (
+        <div className="setting-item toggle-item">
+            <label htmlFor={id}>
+                {Icon && <Icon size={16}/>} {label}
+            </label>
+            <label className="switch">
+                <input
+                    type="checkbox"
+                    id={id}
+                    checked={isChecked}
+                    onChange={onChange}
+                />
+                <span className="slider round"></span>
+            </label>
+        </div>
+    );
+}
+
+
+export default App;

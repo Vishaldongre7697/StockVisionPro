@@ -72,4 +72,51 @@
   .theme-toggle-thumb {
     @apply pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0;
   }
+  
+  /* Modern Profile Panel */
+  .profile-panel {
+    @apply shadow-xl transform origin-top-right transition-all duration-200 ease-out;
+    animation: slideInFade 0.2s ease-out forwards;
+  }
+  
+  @keyframes slideInFade {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  /* Modern Card Styles */
+  .card-gradient {
+    @apply bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900;
+  }
+  
+  .card-gradient-accent {
+    @apply bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20;
+  }
+  
+  .card-hover {
+    @apply transition duration-300 hover:shadow-md hover:border-primary/20;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-primary/70 dark:from-primary dark:to-blue-400 bg-clip-text text-transparent;
+  }
+  
+  /* Dashboard Grid Layout */
+  .dashboard-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+  
+  .dashboard-grid-item-full {
+    @apply col-span-1 md:col-span-2 lg:col-span-3;
+  }
+  
+  .dashboard-grid-item-half {
+    @apply col-span-1 md:col-span-1 lg:col-span-2;
+  }
 }
