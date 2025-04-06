@@ -31,8 +31,8 @@ const ModernHeader = () => {
         </div>
         
         <div className="flex items-center gap-4"> 
-          
-          {/* No app name as requested */}
+          {/* App name centered in header */}
+          <h1 className="text-2xl font-extrabold text-gradient">StockVisionPro</h1>
           
           {/* Profile or Login */}
           {isAuthenticated ? (
