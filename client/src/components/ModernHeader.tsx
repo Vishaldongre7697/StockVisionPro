@@ -24,17 +24,14 @@ const ModernHeader = () => {
             <a className="flex items-center">
               {/* Logo */}
               <div className="h-10 w-10">
-                <img src="/images/logo.svg" alt="StockVisionPro Logo" className="h-full w-full" />
+                <img src="/images/logo.svg" alt="Logo" className="h-full w-full" />
               </div>
             </a>
           </Link>
         </div>
         
         <div className="flex items-center gap-4">
-          {/* App name */}
-          <span className="font-bold text-xl hidden md:inline-block">
-            Stock<span className="text-primary">Vision</span>Pro
-          </span>
+          {/* No app name as requested */}
           
           {/* Profile or Login */}
           {isAuthenticated ? (
