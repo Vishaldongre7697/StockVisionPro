@@ -219,16 +219,13 @@ const Home = () => {
         </CardHeader>
         
         <CardContent>
-          <div className="space-y-4">
-            {topBuyingStocks.map((stock, index) => (
-              <div key={stock.id} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-500">{index + 1}</span>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{stock.symbol}</span>
-                      <span className="text-xs text-gray-500">{stock.name}</span>
-                    </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {topBuyingStocks.map((stock) => (
+              <div key={stock.id} className="p-4 rounded-lg border border-gray-100 shadow-sm">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{stock.symbol}</span>
+                    <span className="text-xs text-gray-500">{stock.name}</span>
                   </div>
                   <div className="text-right">
                     <span className="font-bold">₹{stock.currentPrice.toFixed(2)}</span>
@@ -238,7 +235,7 @@ const Home = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-2 mt-2">
+                <div className="space-y-2 mt-3 border-t border-gray-50 pt-2">
                   <div className="flex justify-between items-center text-xs">
                     <div>
                       <span className="text-gray-500">Buy Quantity:</span>
@@ -259,8 +256,6 @@ const Home = () => {
                     </span>
                   </div>
                 </div>
-                
-                {/* No separator needed */}
               </div>
             ))}
           </div>

@@ -139,6 +139,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Watchlist Routes
   app.get("/api/watchlist/:userId", async (req: Request, res: Response) => {
     try {
+      // Handle special case for guest user
+      if (req.params.userId === 'guest') {
+        // For guest users, return top trending stocks
+        const topStocks = await storage.getTopStocks(6);
+        return res.status(200).json(topStocks);
+      }
+      
       const userId = parseInt(req.params.userId);
       
       if (isNaN(userId)) {
@@ -154,6 +161,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/watchlist", async (req: Request, res: Response) => {
     try {
+      // Special handling for guest user
+      if (req.body.userId === 'guest') {
+        return res.status(200).json({ 
+          id: 0, 
+          userId: 'guest', 
+          stockId: req.body.stockId,
+          addedAt: new Date(),
+          notes: null,
+          alertPrice: null,
+          alertCondition: null
+        });
+      }
+
       const watchlistData = insertWatchlistSchema.parse(req.body);
       
       // Check if stock is already in watchlist
@@ -180,6 +200,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/watchlist/:userId/:stockId", async (req: Request, res: Response) => {
     try {
+      // Handle special case for guest user
+      if (req.params.userId === 'guest') {
+        const stockId = parseInt(req.params.stockId);
+        if (isNaN(stockId)) {
+          return res.status(400).json({ message: "Invalid stock ID" });
+        }
+        // For guest, just return success
+        return res.status(200).json({ message: "Stock removed from watchlist" });
+      }
+      
       const userId = parseInt(req.params.userId);
       const stockId = parseInt(req.params.stockId);
       
@@ -368,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const totalCost = portfolioData.averageBuyPrice * portfolioData.quantity;
       
-      if (user.accountBalance < totalCost) {
+      if (!user.accountBalance || user.accountBalance < totalCost) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
       
@@ -376,7 +406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.createPortfolioItem(portfolioData);
       
       // Update user balance
-      await storage.updateAccountBalance(user.id, user.accountBalance - totalCost);
+      await storage.updateAccountBalance(user.id, (user.accountBalance || 0) - totalCost);
       
       // Create a transaction record
       await storage.createTransaction({
@@ -452,7 +482,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update user balance with sale proceeds
       const user = await storage.getUser(userId);
       if (user) {
-        await storage.updateAccountBalance(userId, user.accountBalance + saleAmount);
+        const currentBalance = user.accountBalance || 0;
+        await storage.updateAccountBalance(userId, currentBalance + saleAmount);
         
         // Create a transaction record
         await storage.createTransaction({

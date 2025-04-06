@@ -39,11 +39,11 @@ const Watchlist = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
 
-  // Fetch user's watchlist
+  // Fetch user's watchlist - allow even for non-authenticated users
   const { data: watchlist, isLoading: isLoadingWatchlist } = useQuery({
-    queryKey: ['/api/watchlist', user?.id],
+    queryKey: ['/api/watchlist', user?.id || 'guest'],
     queryFn: getQueryFn<Stock[]>({ on401: 'returnNull' }),
-    enabled: isAuthenticated && !!user?.id,
+    enabled: true, // Always enabled
   });
 
   // Fetch all stocks for search
@@ -55,14 +55,15 @@ const Watchlist = () => {
   // Add to watchlist mutation
   const addToWatchlist = useMutation({
     mutationFn: async (stockId: number) => {
-      if (!user) throw new Error("User not authenticated");
+      // Allow guest to add to watchlist 
+      const userId = user?.id || 'guest';
       return apiRequest("POST", "/api/watchlist", {
-        userId: user.id,
+        userId,
         stockId
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/watchlist', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/watchlist', user?.id || 'guest'] });
       toast({
         title: "Added to Watchlist",
         description: `${selectedStock?.name} has been added to your watchlist.`,
@@ -81,11 +82,12 @@ const Watchlist = () => {
   // Remove from watchlist mutation
   const removeFromWatchlist = useMutation({
     mutationFn: async (stockId: number) => {
-      if (!user) throw new Error("User not authenticated");
-      return apiRequest("DELETE", `/api/watchlist/${user.id}/${stockId}`);
+      // Allow guest to remove from watchlist
+      const userId = user?.id || 'guest';
+      return apiRequest("DELETE", `/api/watchlist/${userId}/${stockId}`);
     },
     onSuccess: (_, stockId) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/watchlist', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/watchlist', user?.id || 'guest'] });
       const removedStock = allStocks?.find(s => s.id === stockId);
       toast({
         title: "Removed from Watchlist",
@@ -123,21 +125,7 @@ const Watchlist = () => {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center py-10">
-          <h2 className="text-2xl font-bold mb-4">Sign In to View Your Watchlist</h2>
-          <p className="text-muted-foreground mb-6">
-            Create a free account to start tracking your favorite stocks.
-          </p>
-          <Button asChild>
-            <a href="/login">Login</a>
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Show watchlist for all users (even when not authenticated)
 
   return (
     <div className="space-y-6 bg-white">

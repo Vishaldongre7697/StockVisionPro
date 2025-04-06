@@ -41,10 +41,10 @@ export interface IStorage {
   // Watchlist related operations
   getWatchlist(id: number): Promise<Watchlist | undefined>;
   addToWatchlist(watchlistItem: InsertWatchlist): Promise<Watchlist>;
-  removeFromWatchlist(userId: number, stockId: number): Promise<boolean>;
-  getUserWatchlist(userId: number): Promise<Stock[]>;
-  isStockInWatchlist(userId: number, stockId: number): Promise<boolean>;
-  getUserWatchlistItems(userId: number): Promise<Watchlist[]>;
+  removeFromWatchlist(userId: number | 'guest', stockId: number): Promise<boolean>;
+  getUserWatchlist(userId: number | 'guest'): Promise<Stock[]>;
+  isStockInWatchlist(userId: number | 'guest', stockId: number): Promise<boolean>;
+  getUserWatchlistItems(userId: number | 'guest'): Promise<Watchlist[]>;
   updateWatchlistAlert(id: number, alertPrice: number | null, alertCondition: string | null): Promise<Watchlist | undefined>;
 
   // Trading Strategy operations
@@ -405,7 +405,12 @@ export class MemStorage implements IStorage {
     return watchlist;
   }
 
-  async removeFromWatchlist(userId: number, stockId: number): Promise<boolean> {
+  async removeFromWatchlist(userId: number | 'guest', stockId: number): Promise<boolean> {
+    // For guest user, always return true (simulation of successful removal)
+    if (userId === 'guest') {
+      return true;
+    }
+    
     const watchlistId = Array.from(this.watchlists.entries()).find(
       ([_, item]) => item.userId === userId && item.stockId === stockId
     )?.[0];
@@ -417,7 +422,13 @@ export class MemStorage implements IStorage {
     return false;
   }
 
-  async getUserWatchlist(userId: number): Promise<Stock[]> {
+  async getUserWatchlist(userId: number | 'guest'): Promise<Stock[]> {
+    // For guest user, return recommended stocks
+    if (userId === 'guest') {
+      // Return top trending stocks for guest users
+      return this.getTopStocks(6);
+    }
+    
     const userWatchlistItems = Array.from(this.watchlists.values()).filter(
       (item) => item.userId === userId
     );
@@ -429,13 +440,23 @@ export class MemStorage implements IStorage {
     );
   }
   
-  async getUserWatchlistItems(userId: number): Promise<Watchlist[]> {
+  async getUserWatchlistItems(userId: number | 'guest'): Promise<Watchlist[]> {
+    // For guest user, return empty watchlist items
+    if (userId === 'guest') {
+      return [];
+    }
+    
     return Array.from(this.watchlists.values()).filter(
       (item) => item.userId === userId
     );
   }
 
-  async isStockInWatchlist(userId: number, stockId: number): Promise<boolean> {
+  async isStockInWatchlist(userId: number | 'guest', stockId: number): Promise<boolean> {
+    // For guest user, always return false to allow adding any stock
+    if (userId === 'guest') {
+      return false;
+    }
+    
     return Array.from(this.watchlists.values()).some(
       (item) => item.userId === userId && item.stockId === stockId
     );
