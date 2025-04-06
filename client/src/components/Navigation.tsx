@@ -6,7 +6,7 @@ const Navigation = () => {
   const [location] = useLocation();
 
   const navItems = [
-    { icon: Home, label: "Home", href: "/" },
+    { icon: Home, label: "Home", href: "/home" },
     { icon: List, label: "Watchlist", href: "/watchlist" },
     { icon: TrendingUp, label: "Predictions", href: "/predictions" },
     { icon: Cpu, label: "AI Insights", href: "/ai-insights" },

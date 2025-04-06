@@ -17,6 +17,11 @@
 }
 
 @layer components {
+  /* Text styles */
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent font-extrabold;
+  }
+  
   /* Custom common components */
   .stock-card {
     @apply p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200 mb-3;
@@ -104,7 +109,7 @@
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:via-indigo-400 dark:to-violet-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent font-extrabold;
   }
   
   /* Dashboard Grid Layout */
@@ -158,7 +163,7 @@
   }
   
   .header-title.center {
-    @apply w-full text-center absolute left-1/2 transform -translate-x-1/2 font-bold text-gradient;
+    @apply w-full text-center absolute left-1/2 transform -translate-x-1/2 font-bold text-2xl text-gradient;
   }
   
   .header-buttons {
