@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getQueryFn } from '@/lib/queryClient';
 import { Stock } from '@shared/schema';
 import { cn } from '@/lib/utils';
+import Header from '@/components/Header';
 
 const Home = () => {
   const { user } = useAuth();
@@ -58,8 +59,11 @@ const Home = () => {
 
   return (
     <div className="space-y-6 bg-white">
-      {/* Header with Search */}
-      <div className="flex justify-between items-center">
+      {/* Header with App Name centered */}
+      <Header title="StockVisionPro" centerTitle={true} />
+      
+      {/* Main content with Search */}
+      <div className="flex justify-between items-center mt-4">
         <h1 className="text-2xl font-bold">Market Overview</h1>
         <div className="relative w-64">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

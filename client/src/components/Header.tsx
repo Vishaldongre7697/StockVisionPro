@@ -1,82 +1,157 @@
+import { useState, useEffect, useCallback } from "react";
+import { Link, useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
-import { Link } from "wouter";
-import { Search, Bell, UserCircle, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useTheme } from "@/lib/themeContext";
 
-const Header = () => {
-  const { user, isAuthenticated, logout } = useAuth();
-  const { theme } = useTheme();
+interface HeaderProps {
+  title?: string;
+  centerTitle?: boolean;
+  showBackButton?: boolean;
+  onBackClick?: () => void;
+  className?: string;
+}
+
+// Data for notifications demo
+const initialNotifications = [
+  { id: 1, title: '🚀 RELIANCE breakout alert!', message: 'Stock has broken resistance at ₹2,850', time: '10 min ago' },
+  { id: 2, title: '📊 Market Update', message: 'Nifty 50 hits new all-time high', time: '1 hour ago' },
+  { id: 3, title: '🤖 AI Signal', message: 'Strong buy signal for TCS detected', time: '3 hours ago' }
+];
+
+const Header = ({ 
+  title = "", 
+  centerTitle = false, 
+  showBackButton = false,
+  onBackClick,
+  className 
+}: HeaderProps) => {
+  const { user } = useAuth();
+  const [location] = useLocation();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [notifications, setNotifications] = useState(initialNotifications);
+  const [notificationCount, setNotificationCount] = useState(3); // Default notification count for demo
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+
+  // Apply theme class to body
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  // Toggle theme
+  const handleToggleTheme = useCallback(() => {
+    setIsDarkMode(prev => !prev);
+  }, []);
+
+  // Clear notifications
+  const handleClearNotifications = useCallback(() => {
+    setNotifications([]);
+    setNotificationCount(0);
+    setShowNotificationModal(false);
+  }, []);
+
+  // Toggle notifications modal
+  const handleToggleNotifications = useCallback(() => {
+    setShowNotificationModal(prev => !prev);
+  }, []);
+
+  // Close modal if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.notifications-content') && !target.closest('.icon-button-notification')) {
+        setShowNotificationModal(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   return (
-    <header className="bg-background border-b border-border shadow-sm">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center">
-          <Link href="/">
-            <a className="flex items-center">
-              {/* Logo */}
-              <div className="mr-2 h-8 w-8">
-                <img src="/images/logo.svg" alt="StockVisionPro Logo" className="h-full w-full" />
-              </div>
-              <span className="font-bold text-xl">
-                Stock<span className="text-primary">Vision</span>Pro
-              </span>
-            </a>
-          </Link>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="icon" aria-label="Search">
-            <Search className="h-5 w-5 text-neutral-600" />
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Notifications">
-            <Bell className="h-5 w-5 text-neutral-600" />
-          </Button>
+    <>
+      <div className={cn("header", className)}>
+        {showBackButton && (
+          <button 
+            className="back-button" 
+            aria-label="Go back"
+            onClick={onBackClick || (() => window.history.back())}
+          >
+            <i className="fa-solid fa-arrow-left"></i>
+          </button>
+        )}
+        
+        <h1 className={cn("header-title", centerTitle && "center flex-grow")}>
+          {title}
+        </h1>
+        
+        <div className="header-buttons">
+          <button 
+            className="icon-button" 
+            aria-label="Toggle Theme" 
+            onClick={handleToggleTheme}
+          >
+            <i className={isDarkMode ? "fa-regular fa-sun" : "fa-regular fa-moon"}></i>
+          </button>
           
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center p-0"
-                  variant="ghost"
-                >
-                  <span className="text-sm font-medium">
-                    {user?.username?.substring(0, 2).toUpperCase() || "U"}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <a className="flex items-center cursor-pointer">
-                      <UserCircle className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </a>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="icon-button icon-button-notification" 
+              aria-label="Show Notifications" 
+              onClick={handleToggleNotifications}
+            >
+              <i className="fa-regular fa-bell"></i>
+            </button>
+            {notificationCount > 0 && (
+              <span className="badge">{notificationCount}</span>
+            )}
+          </div>
+          
+          {user ? (
+            <Link href="/profile" className="profile-button">
+              <div className="profile-avatar">
+                {user.username ? user.username.charAt(0).toUpperCase() : "U"}
+              </div>
+            </Link>
           ) : (
-            <Button variant="default" size="sm" asChild>
-              <Link href="/login">Login</Link>
-            </Button>
+            <Link href="/login" className="login-button">
+              Login
+            </Link>
           )}
         </div>
       </div>
-    </header>
+
+      {/* Notifications Modal */}
+      {showNotificationModal && (
+        <div className="notifications-modal">
+          <div className="notifications-content">
+            <div className="notifications-header">
+              <h2 className="notifications-title">🔔 Notifications</h2>
+              {notifications.length > 0 && (
+                <button className="clear-button" onClick={handleClearNotifications}>Mark all as read</button>
+              )}
+              <button onClick={handleToggleNotifications} className="close-modal-button" aria-label="Close Notifications Modal">
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div className="notifications-list">
+              {notifications.length > 0 ? (
+                notifications.map(item => (
+                  <div className="notification-item" key={item.id}>
+                    <div className="notification-title">{item.title}</div>
+                    <div className="notification-message">{item.message}</div>
+                    <div className="notification-time">{item.time}</div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  No new notifications.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

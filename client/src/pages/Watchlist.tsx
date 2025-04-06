@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import Header from "@/components/Header";
 
 const Watchlist = () => {
   const { user } = useAuth();
@@ -296,24 +297,13 @@ const Watchlist = () => {
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
-      <div className="header">
-        <h1 className="header-title">📈 Market Watchlist</h1>
-        <div className="header-buttons">
-          <button className="icon-button" aria-label="Toggle Theme" onClick={handleToggleTheme}>
-            <i className={isDarkMode ? "fa-regular fa-sun" : "fa-regular fa-moon"}></i>
-          </button>
-          <div style={{ position: 'relative' }}>
-            <button className="icon-button" aria-label="Show Notifications" onClick={() => handleShowModal('notifications')}>
-              <i className="fa-regular fa-bell"></i>
-            </button>
-            {notificationCount > 0 && (
-              <span className="badge">{notificationCount}</span>
-            )}
-          </div>
-          <button className="icon-button" aria-label="Toggle Search" onClick={handleToggleSearch}>
-            <i className="fa-solid fa-magnifying-glass"></i>
-          </button>
-        </div>
+      <Header title="📈 Market Watchlist" />
+      
+      {/* Search icon */}
+      <div className="search-icon-container">
+        <button className="icon-button" aria-label="Toggle Search" onClick={handleToggleSearch}>
+          <i className="fa-solid fa-magnifying-glass"></i>
+        </button>
       </div>
 
       {/* Search Bar */}
