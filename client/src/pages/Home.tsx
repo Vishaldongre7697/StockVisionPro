@@ -1,12 +1,10 @@
-import { Search, TrendingUp, ArrowUpRight, ArrowDownRight, Home as HomeIcon, 
-         ChartBar, Calendar, Zap, Award, Eye, Brain, BarChart4, LineChart, AreaChart } from 'lucide-react';
+import { Search, TrendingUp, ArrowUpRight, ArrowDownRight, BarChart3, AreaChart, DollarSign, PieChart, BarChart4, LineChart, Activity, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { getQueryFn } from '@/lib/queryClient';
@@ -30,7 +28,7 @@ const Home = () => {
 
   // Market summary data
   const marketSummary = {
-    text: "Nifty 50 is up 1.2% with strong FII inflows. IT and Banking sectors showing positive momentum. Global markets are mixed with US futures pointing higher.",
+    text: "Market is up with strong FII inflows. IT and Banking sectors showing positive momentum. Global markets are mixed with US futures pointing higher.",
     indices: [
       { name: "NIFTY 50", value: 22875.50, change: 275.45, changePercent: 1.22 },
       { name: "SENSEX", value: 75245.35, change: 882.05, changePercent: 1.18 },
@@ -39,100 +37,92 @@ const Home = () => {
     ]
   };
 
-  const aiInsights = [
-    {
-      id: 1,
-      title: "Market Trend Analysis",
-      description: "Positive momentum in Nifty with potential for further upside. Support at 22,700.",
-      confidence: 85,
-      tags: ["Bullish", "Technical"]
-    },
-    {
-      id: 2,
-      title: "Sector Rotation Alert",
-      description: "Capital rotation from IT to Banking sector expected in the coming week based on earnings outlook.",
-      confidence: 78,
-      tags: ["Sector", "Rotation"]
-    },
-    {
-      id: 3,
-      title: "Volatility Forecast",
-      description: "Increased volatility expected around upcoming Fed meeting. Risk management advised.",
-      confidence: 82,
-      tags: ["Volatility", "Risk"]
-    }
+  // Top buying stocks with quantity data
+  const topBuyingStocks = [
+    { id: 1, symbol: 'HDFC', name: 'HDFC Bank Ltd', currentPrice: 1678.45, change: 28.55, changePercent: 1.73, volume: 3245000, buyQuantity: 2100000 },
+    { id: 2, symbol: 'INFY', name: 'Infosys Ltd', currentPrice: 1425.70, change: 32.80, changePercent: 2.35, volume: 1876500, buyQuantity: 1200000 },
+    { id: 3, symbol: 'TCS', name: 'Tata Consultancy Services', currentPrice: 3456.20, change: 45.30, changePercent: 1.33, volume: 985000, buyQuantity: 650000 },
+    { id: 4, symbol: 'RELI', name: 'Reliance Industries Ltd', currentPrice: 2512.40, change: 38.75, changePercent: 1.57, volume: 2654000, buyQuantity: 1750000 },
+    { id: 5, symbol: 'ICBK', name: 'ICICI Bank Ltd', currentPrice: 932.60, change: 15.40, changePercent: 1.68, volume: 3120000, buyQuantity: 1950000 }
+  ];
+
+  // Trending stocks with additional data
+  const trendingStocks = [
+    { id: 1, symbol: 'ADANI', name: 'Adani Enterprises Ltd', currentPrice: 2765.30, change: 125.45, changePercent: 4.75, volume: 4250000, momentum: 'high' },
+    { id: 2, symbol: 'BHARTI', name: 'Bharti Airtel Ltd', currentPrice: 895.20, change: 23.75, changePercent: 2.73, volume: 1965000, momentum: 'medium' },
+    { id: 3, symbol: 'ITC', name: 'ITC Ltd', currentPrice: 425.85, change: -8.35, changePercent: -1.92, volume: 5760000, momentum: 'low' },
+    { id: 4, symbol: 'WIPRO', name: 'Wipro Ltd', currentPrice: 452.70, change: 12.35, changePercent: 2.80, volume: 2320000, momentum: 'medium' },
+    { id: 5, symbol: 'TATAMOT', name: 'Tata Motors Ltd', currentPrice: 632.45, change: 18.70, changePercent: 3.05, volume: 3854000, momentum: 'high' },
+    { id: 6, symbol: 'HDFCLIFE', name: 'HDFC Life Insurance', currentPrice: 645.20, change: -5.35, changePercent: -0.82, volume: 1265000, momentum: 'low' }
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Mobile Search Bar - Visible only on small screens */}
-      <div className="relative md:hidden">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder="Search stocks, indices..." 
-          className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-primary/20"
-        />
+    <div className="space-y-6 bg-white">
+      {/* Header with Search */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Market Overview</h1>
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search stocks..." 
+            className="pl-10 pr-4 bg-gray-50 border-gray-100"
+          />
+        </div>
       </div>
       
-      {/* Welcome Card */}
-      <Card className="card-gradient card-hover overflow-hidden border-gray-200/50 dark:border-gray-700/50">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full -ml-12 -mb-12"></div>
-        
-        <CardHeader className="pb-2 relative">
-          <CardTitle className="text-xl md:text-2xl font-bold">
-            <span className="text-gradient">Welcome back, {user?.fullName || user?.username || 'Trader'}</span>
-          </CardTitle>
-          <CardDescription className="text-base">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+      {/* Market Summary */}
+      <Card className="bg-white border border-gray-100 shadow-sm">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg font-bold">Market Summary</CardTitle>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+            </Badge>
+          </div>
+          <CardDescription className="text-sm">
+            {marketSummary.text}
           </CardDescription>
         </CardHeader>
         
         <CardContent>
-          <p className="text-sm text-muted-foreground mb-4 max-w-3xl">
-            {marketSummary.text}
-          </p>
-          
-          <div className="dashboard-grid">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {marketSummary.indices.map((index) => (
-              <Card key={index.name} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200">
+              <Card key={index.name} className="bg-white border border-gray-100 shadow-sm">
                 <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <h3 className="font-medium">{index.name}</h3>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-xl font-bold">
-                          {index.value.toLocaleString('en-IN', { 
-                            maximumFractionDigits: 2,
-                            minimumFractionDigits: 2
-                          })}
-                        </span>
-                        <div className={cn(
-                          "text-sm font-medium flex items-center",
-                          index.changePercent > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                        )}>
-                          {index.changePercent > 0 ? (
+                  <div className="flex flex-col">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">{index.name}</span>
+                      <div className={cn(
+                        "text-xs font-medium px-2 py-1 rounded-full",
+                        index.changePercent > 0 
+                          ? "bg-green-50 text-green-700" 
+                          : "bg-red-50 text-red-700"
+                      )}>
+                        {index.changePercent > 0 ? (
+                          <span className="flex items-center">
                             <ArrowUpRight className="mr-1 h-3 w-3" />
-                          ) : (
+                            {index.changePercent.toFixed(2)}%
+                          </span>
+                        ) : (
+                          <span className="flex items-center">
                             <ArrowDownRight className="mr-1 h-3 w-3" />
-                          )}
-                          {(index.changePercent > 0 ? '+' : '') + index.change.toFixed(2)}
-                          <span className="ml-1">({(index.changePercent > 0 ? '+' : '') + index.changePercent.toFixed(2)}%)</span>
-                        </div>
+                            {Math.abs(index.changePercent).toFixed(2)}%
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div className={cn(
-                      "h-10 w-10 rounded-full flex items-center justify-center",
-                      index.changePercent > 0 
-                        ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400" 
-                        : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                    <span className="text-xl font-bold">
+                      {index.value.toLocaleString('en-IN', { 
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 2
+                      })}
+                    </span>
+                    <span className={cn(
+                      "text-xs mt-1",
+                      index.changePercent > 0 ? "text-green-600" : "text-red-600"
                     )}>
-                      {index.changePercent > 0 ? (
-                        <AreaChart className="h-5 w-5" />
-                      ) : (
-                        <BarChart4 className="h-5 w-5" />
-                      )}
-                    </div>
+                      {(index.changePercent > 0 ? '+' : '') + index.change.toFixed(2)}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -141,248 +131,191 @@ const Home = () => {
         </CardContent>
       </Card>
       
-      {/* Tabs Section for Content Organization */}
-      <Tabs defaultValue="trending" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full">
-          <TabsTrigger value="trending" className="text-sm">
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Trending
-          </TabsTrigger>
-          <TabsTrigger value="watchlist" className="text-sm">
-            <Eye className="mr-2 h-4 w-4" />
-            Watchlist
-          </TabsTrigger>
-          <TabsTrigger value="ai-insights" className="text-sm">
-            <Brain className="mr-2 h-4 w-4" />
-            AI Insights
-          </TabsTrigger>
-        </TabsList>
+      {/* Trending Stocks Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+            <span>Trending Stocks</span>
+          </h2>
+          <Button variant="outline" size="sm" className="text-xs gap-1 border-blue-200 text-blue-700">
+            View All
+            <ArrowUpRight className="h-3 w-3" />
+          </Button>
+        </div>
         
-        <TabsContent value="trending" className="space-y-4 pt-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <span>Trending Stocks</span>
-            </h2>
-            <Button variant="outline" size="sm" className="text-xs gap-1">
-              View All
-              <ArrowUpRight className="h-3 w-3" />
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {topStocks?.slice(0, 6).map((stock) => (
-              <Card key={stock.id} className="border border-gray-100 dark:border-gray-700 card-hover">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "h-10 w-10 rounded-full flex items-center justify-center",
-                        stock.change && stock.change > 0 
-                          ? "bg-green-100 dark:bg-green-900/20" 
-                          : "bg-red-100 dark:bg-red-900/20"
-                      )}>
-                        <span className="font-bold text-sm">
-                          {stock.symbol.substring(0, 2)}
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className="font-medium">{stock.symbol}</h3>
-                        <p className="text-xs text-muted-foreground">{stock.name}</p>
-                      </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {trendingStocks.map((stock) => (
+            <Card key={stock.id} className="bg-white border border-gray-100 shadow-sm hover:shadow transition-all duration-200">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "h-10 w-10 rounded-full flex items-center justify-center",
+                      stock.changePercent > 0 
+                        ? "bg-green-50 text-green-700" 
+                        : "bg-red-50 text-red-700"
+                    )}>
+                      <span className="font-bold text-sm">
+                        {stock.symbol.substring(0, 2)}
+                      </span>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold">
-                        ₹{stock.currentPrice.toLocaleString('en-IN', {
-                          maximumFractionDigits: 2,
-                          minimumFractionDigits: 2
-                        })}
-                      </p>
-                      <p className={stock.change && stock.change > 0 ? "stock-up text-xs" : "stock-down text-xs"}>
-                        {stock.change ? (stock.change > 0 ? '+' : '') + stock.change.toFixed(2) : '0.00'} 
-                        ({stock.changePercent ? (stock.changePercent > 0 ? '+' : '') + stock.changePercent.toFixed(2) : '0.00'}%)
-                      </p>
+                    <div>
+                      <h3 className="font-medium">{stock.symbol}</h3>
+                      <p className="text-xs text-muted-foreground">{stock.name}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="watchlist" className="space-y-4 pt-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Eye className="h-5 w-5 text-primary" />
-              <span>Your Watchlist</span>
-            </h2>
-            <Button variant="outline" size="sm" className="text-xs gap-1">
-              Manage
-              <ArrowUpRight className="h-3 w-3" />
-            </Button>
-          </div>
-          
-          {user ? (
-            <>
-              {topStocks?.slice(0, 3).map((stock) => (
-                <Card key={stock.id} className="border border-gray-100 dark:border-gray-700 card-hover">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "h-10 w-10 rounded-full flex items-center justify-center",
-                          stock.change && stock.change > 0 
-                            ? "bg-green-100 dark:bg-green-900/20" 
-                            : "bg-red-100 dark:bg-red-900/20"
-                        )}>
-                          <span className="font-bold text-sm">
-                            {stock.symbol.substring(0, 2)}
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{stock.symbol}</h3>
-                          <p className="text-xs text-muted-foreground">{stock.name}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">
-                          ₹{stock.currentPrice.toLocaleString('en-IN', {
-                            maximumFractionDigits: 2,
-                            minimumFractionDigits: 2
-                          })}
-                        </p>
-                        <p className={stock.change && stock.change > 0 ? "stock-up text-xs" : "stock-down text-xs"}>
-                          {stock.change ? (stock.change > 0 ? '+' : '') + stock.change.toFixed(2) : '0.00'} 
-                          ({stock.changePercent ? (stock.changePercent > 0 ? '+' : '') + stock.changePercent.toFixed(2) : '0.00'}%)
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </>
-          ) : (
-            <Card className="border-dashed border-2 border-gray-200 dark:border-gray-700">
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-                <Eye className="h-10 w-10 text-muted-foreground mb-2" />
-                <h3 className="font-medium mb-1">No Watchlist Items</h3>
-                <p className="text-sm text-muted-foreground mb-4">Login to create and track your watchlist</p>
-                <Button>Login to Continue</Button>
+                  <div className={cn(
+                    "text-xs font-medium px-2 py-1 rounded-full",
+                    stock.momentum === 'high' ? "bg-green-50 text-green-700" :
+                    stock.momentum === 'medium' ? "bg-amber-50 text-amber-700" :
+                    "bg-red-50 text-red-700"
+                  )}>
+                    {stock.momentum === 'high' ? "High Momentum" :
+                     stock.momentum === 'medium' ? "Medium Momentum" :
+                     "Low Momentum"}
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-sm text-gray-500">Volume</p>
+                    <p className="text-sm font-medium">{(stock.volume / 1000000).toFixed(2)}M</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-lg">
+                      ₹{stock.currentPrice.toLocaleString('en-IN', {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 2
+                      })}
+                    </p>
+                    <p className={stock.changePercent > 0 ? "text-green-600 text-xs" : "text-red-600 text-xs"}>
+                      {(stock.changePercent > 0 ? '+' : '') + stock.change.toFixed(2)} 
+                      ({(stock.changePercent > 0 ? '+' : '') + stock.changePercent.toFixed(2)}%)
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="ai-insights" className="space-y-4 pt-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Brain className="h-5 w-5 text-primary" />
-              <span>AI Market Insights</span>
-            </h2>
-            <Button variant="outline" size="sm" className="text-xs gap-1">
-              View All
-              <ArrowUpRight className="h-3 w-3" />
+          ))}
+        </div>
+      </div>
+      
+      {/* Top Buying Stocks - With Quantity Section */}
+      <Card className="bg-white border border-gray-100 shadow-sm">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              <span>Top Buying Stocks with Volume</span>
+            </CardTitle>
+            <Button variant="outline" size="sm" className="text-xs border-blue-200 text-blue-700">
+              View Details
             </Button>
           </div>
-          
-          <Card className="card-gradient-accent card-hover border-primary/10">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg">Market Analysis</CardTitle>
-                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  Bullish
-                </Badge>
-              </div>
-              <CardDescription>
-                AI-generated market sentiment and analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {aiInsights.map((insight) => (
-                <div key={insight.id} className="bg-white/60 dark:bg-gray-800/60 p-4 rounded-lg shadow-sm">
-                  <div className="flex justify-between mb-1 items-start">
-                    <div className="flex gap-2 items-center">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Zap className="h-4 w-4 text-primary" />
-                      </div>
-                      <h3 className="font-medium text-sm">{insight.title}</h3>
+          <CardDescription>
+            Stocks with highest buying quantity in today's session
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="space-y-4">
+            {topBuyingStocks.map((stock, index) => (
+              <div key={stock.id} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-500">{index + 1}</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{stock.symbol}</span>
+                      <span className="text-xs text-gray-500">{stock.name}</span>
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {insight.confidence}% confidence
-                    </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2">{insight.description}</p>
-                  <div className="flex gap-2 mt-2">
-                    {insight.tags.map((tag, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">{tag}</Badge>
-                    ))}
+                  <div className="text-right">
+                    <span className="font-bold">₹{stock.currentPrice.toFixed(2)}</span>
+                    <div className={stock.changePercent > 0 ? "text-green-600 text-xs" : "text-red-600 text-xs"}>
+                      {(stock.changePercent > 0 ? '+' : '') + stock.changePercent.toFixed(2)}%
+                    </div>
                   </div>
                 </div>
-              ))}
-            </CardContent>
-            <CardFooter className="pt-0">
-              <Button variant="outline" className="w-full text-primary border-primary/20">
-                <Brain className="mr-2 h-4 w-4" />
-                View Detailed Analysis
-              </Button>
-            </CardFooter>
-          </Card>
-          
-          <Card className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm card-hover">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary" />
-                Top AI Pick
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-start">
-                <div className="flex items-start gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                    RL
+                
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-xs">
+                    <span>Buy Quantity: {(stock.buyQuantity / 1000000).toFixed(2)}M</span>
+                    <span>Volume: {(stock.volume / 1000000).toFixed(2)}M</span>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-lg">RELIANCE</h3>
-                    <p className="text-sm text-muted-foreground">Reliance Industries Ltd</p>
+                  <Progress 
+                    value={(stock.buyQuantity / stock.volume) * 100}
+                    className="h-2 bg-gray-100"
+                    indicatorClassName={stock.changePercent > 0 ? "bg-green-500" : "bg-red-500"}
+                  />
+                  <div className="flex justify-between items-center text-xs text-gray-500">
+                    <span>Buy Ratio: {((stock.buyQuantity / stock.volume) * 100).toFixed(1)}%</span>
+                    <span className={stock.changePercent > 0 ? "text-green-600" : "text-red-600"}>
+                      {stock.changePercent > 0 ? "Bullish" : "Bearish"} Trend
+                    </span>
                   </div>
                 </div>
-                <div className="text-center">
-                  <span className="signal-buy px-3 py-1">BUY</span>
-                  <p className="text-xs mt-1 font-medium">Target: ₹3,120</p>
-                </div>
+                
+                {index < topBuyingStocks.length - 1 && <Separator className="my-2" />}
               </div>
-              
-              <Separator className="my-4" />
-              
-              <div className="text-sm text-muted-foreground">
-                <p className="mb-2">AI predicts a potential 8.3% upside over the next 30 days based on technical indicators, fundamental analysis, and market sentiment.</p>
-                <Button variant="outline" size="sm" className="mt-2">
-                  View Detailed Analysis
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
       
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Button variant="outline" className="h-auto py-3 px-4 flex flex-col items-center gap-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200">
-          <ChartBar className="h-5 w-5 text-primary mb-1" />
-          <span className="text-sm font-medium">Portfolio</span>
-        </Button>
-        <Button variant="outline" className="h-auto py-3 px-4 flex flex-col items-center gap-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200">
-          <LineChart className="h-5 w-5 text-primary mb-1" />
-          <span className="text-sm font-medium">Trading</span>
-        </Button>
-        <Button variant="outline" className="h-auto py-3 px-4 flex flex-col items-center gap-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200">
-          <Brain className="h-5 w-5 text-primary mb-1" />
-          <span className="text-sm font-medium">SuhuAI</span>
-        </Button>
-        <Button variant="outline" className="h-auto py-3 px-4 flex flex-col items-center gap-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200">
-          <Calendar className="h-5 w-5 text-primary mb-1" />
-          <span className="text-sm font-medium">Events</span>
-        </Button>
+      {/* Market Overview Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-white border border-gray-100 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center mb-3">
+                <Activity className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="font-medium">Market Breadth</h3>
+              <p className="text-3xl font-bold mt-2 text-green-600">1.45</p>
+              <p className="text-xs text-gray-500 mt-1">Advance/Decline Ratio</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white border border-gray-100 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="font-medium">Advancing</h3>
+              <p className="text-3xl font-bold mt-2">1,854</p>
+              <p className="text-xs text-gray-500 mt-1">Total Advancing Stocks</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white border border-gray-100 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
+                <TrendingDown className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="font-medium">Declining</h3>
+              <p className="text-3xl font-bold mt-2">1,278</p>
+              <p className="text-xs text-gray-500 mt-1">Total Declining Stocks</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white border border-gray-100 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center mb-3">
+                <DollarSign className="h-6 w-6 text-amber-600" />
+              </div>
+              <h3 className="font-medium">Total Volume</h3>
+              <p className="text-3xl font-bold mt-2">7.8B</p>
+              <p className="text-xs text-gray-500 mt-1">Market Volume (shares)</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
