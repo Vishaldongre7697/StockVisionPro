@@ -59,8 +59,8 @@ const Home = () => {
 
   return (
     <div className="space-y-6 bg-white">
-      {/* Header - empty without title */}
-      <Header title="" centerTitle={false} />
+      {/* Header with App Name centered */}
+      <Header title="StockVisionPro" centerTitle={true} />
       
       {/* Main content with Search */}
       <div className="flex justify-between items-center mt-4">

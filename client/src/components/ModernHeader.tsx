@@ -30,7 +30,8 @@ const ModernHeader = () => {
           </Link>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4"> 
+          
           {/* No app name as requested */}
           
           {/* Profile or Login */}

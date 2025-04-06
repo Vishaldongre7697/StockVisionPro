@@ -38,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       toast({
         title: "Login Successful",
-        description: `Welcome, ${userData.username}!`,
+        description: `Welcome to StockVisionPro, ${userData.username}!`,
         variant: "default",
       });
       
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       toast({
         title: "Registration Successful",
-        description: `Welcome, ${newUser.username}!`,
+        description: `Welcome to StockVisionPro, ${newUser.username}!`,
         variant: "default",
       });
       

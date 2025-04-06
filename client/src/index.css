@@ -158,8 +158,7 @@
   }
   
   .header-title.center {
-    @apply w-full;
-    text-align: center;
+    @apply w-full text-center absolute left-1/2 transform -translate-x-1/2 font-bold text-gradient;
   }
   
   .header-buttons {
