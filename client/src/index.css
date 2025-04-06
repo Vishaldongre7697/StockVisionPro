@@ -104,7 +104,7 @@
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-primary to-primary/70 dark:from-primary dark:to-blue-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:via-indigo-400 dark:to-violet-400 bg-clip-text text-transparent;
   }
   
   /* Dashboard Grid Layout */
