@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AiSuggestion, Stock } from "@shared/schema";
-import Header from "@/components/Header";
+import SimplifiedHeader from "@/components/SimplifiedHeader";
 import Navigation from "@/components/Navigation";
 import MarketTicker from "@/components/MarketTicker";
 import AISuggestions from "@/components/AISuggestions";
@@ -97,7 +97,7 @@ const AIInsights = () => {
 
   return (
     <div className="min-h-screen pb-16 relative">
-      <Header />
+      <SimplifiedHeader hideAppName={true} />
       <MarketTicker />
       
       <main className="container mx-auto px-4 py-4">
