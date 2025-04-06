@@ -62,11 +62,7 @@ const Home = () => {
       {/* Header with App Name centered */}
       <Header title="StockVisionPro" centerTitle={true} />
       
-      {/* Page Title - StockVisionPro centered at the top */}
-      <div className="text-center mt-6 mb-4">
-        <h1 className="text-4xl font-extrabold text-gradient tracking-tight">StockVisionPro</h1>
-        <p className="text-sm text-muted-foreground mt-2">AI-Powered Trading Platform</p>
-      </div>
+
       
       {/* Main content with Search */}
       <div className="flex justify-between items-center mt-4">
