@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, X, Search, Trash2, Bell, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Plus, X, Search, Trash2, Bell, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownRight, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
@@ -251,9 +251,9 @@ const Watchlist = () => {
       
       {/* Watchlist Summary Card */}
       <Card className="bg-white border border-gray-100 shadow-sm">
-        <CardHeader className="pb-2 border-b border-gray-100">
+        <CardHeader className="pb-2">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-lg font-bold">Watchlist Summary</CardTitle>
+            <h2 className="text-lg font-bold">Watchlist Summary</h2>
             <div className="flex gap-2">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 {watchlist?.filter(s => (s.changePercent || 0) > 0).length || 0} Gaining
@@ -285,7 +285,7 @@ const Watchlist = () => {
           ) : (
             <div className="text-center py-8">
               <div className="h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Eye className="h-8 w-8 text-blue-600" />
+                <span className="text-blue-600 text-2xl font-bold">W</span>
               </div>
               <h3 className="font-medium text-lg mb-2">Your watchlist is empty</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">

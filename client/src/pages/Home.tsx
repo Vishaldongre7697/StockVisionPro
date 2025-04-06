@@ -203,19 +203,19 @@ const Home = () => {
       
       {/* Top Buying Stocks - With Quantity Section */}
       <Card className="bg-white border border-gray-100 shadow-sm">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 border-none">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-blue-600" />
-              <span>Top Buying Stocks with Volume</span>
-            </CardTitle>
+              <h2 className="text-lg font-bold">Top Buying Stocks with Volume</h2>
+            </div>
             <Button variant="outline" size="sm" className="text-xs border-blue-200 text-blue-700">
               View Details
             </Button>
           </div>
-          <CardDescription>
+          <p className="text-sm text-muted-foreground mt-1">
             Stocks with highest buying quantity in today's session
-          </CardDescription>
+          </p>
         </CardHeader>
         
         <CardContent>
@@ -238,25 +238,29 @@ const Home = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-1">
+                <div className="space-y-2 mt-2">
                   <div className="flex justify-between items-center text-xs">
-                    <span>Buy Quantity: {(stock.buyQuantity / 1000000).toFixed(2)}M</span>
-                    <span>Volume: {(stock.volume / 1000000).toFixed(2)}M</span>
+                    <div>
+                      <span className="text-gray-500">Buy Quantity:</span>
+                      <span className="ml-1 font-medium">{(stock.buyQuantity / 1000000).toFixed(2)}M</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Volume:</span>
+                      <span className="ml-1 font-medium">{(stock.volume / 1000000).toFixed(2)}M</span>
+                    </div>
                   </div>
-                  <Progress 
-                    value={(stock.buyQuantity / stock.volume) * 100}
-                    className="h-2 bg-gray-100"
-                    indicatorClassName={stock.changePercent > 0 ? "bg-blue-500" : "bg-orange-500"}
-                  />
-                  <div className="flex justify-between items-center text-xs text-gray-500">
-                    <span>Buy Ratio: {((stock.buyQuantity / stock.volume) * 100).toFixed(1)}%</span>
-                    <span className={stock.changePercent > 0 ? "text-blue-600" : "text-orange-600"}>
+                  <div className="flex justify-between items-center text-xs">
+                    <div>
+                      <span className="text-gray-500">Buy Ratio:</span>
+                      <span className="ml-1 font-medium">{((stock.buyQuantity / stock.volume) * 100).toFixed(1)}%</span>
+                    </div>
+                    <span className={stock.changePercent > 0 ? "text-blue-600 font-medium" : "text-orange-600 font-medium"}>
                       {stock.changePercent > 0 ? "Bullish" : "Bearish"} Trend
                     </span>
                   </div>
                 </div>
                 
-                {index < topBuyingStocks.length - 1 && <Separator className="my-2" />}
+                {/* No separator needed */}
               </div>
             ))}
           </div>

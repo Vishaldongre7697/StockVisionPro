@@ -44,63 +44,15 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
                 </svg>
               </Button>
             )}
-            <h1 className="font-bold text-xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent dark:from-primary dark:to-blue-300">
-              {title || 'StockVisionPro'}
-            </h1>
+            {title && (
+              <h1 className="font-bold text-xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent dark:from-primary dark:to-blue-300">
+                {title}
+              </h1>
+            )}
           </div>
           
-          <div className="flex-1 max-w-md mx-4 hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search stocks, strategies..." 
-                className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-primary/20"
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-              />
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-1 sm:space-x-2">
+          <div className="flex items-center space-x-2">
             <ThemeToggle />
-            
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              {notificationCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary">
-                  {notificationCount}
-                </Badge>
-              )}
-            </Button>
-
-            <Button 
-              ref={profileBtnRef}
-              variant="ghost" 
-              size="icon" 
-              className="rounded-full relative"
-              onClick={() => setIsProfilePanelOpen(!isProfilePanelOpen)}
-            >
-              {isAuthenticated ? (
-                <Avatar className="h-8 w-8 border-2 border-transparent hover:border-primary transition-colors">
-                  <AvatarImage src={user?.profileImage} alt={user?.username || 'User'} />
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {user?.fullName?.[0] || user?.username?.[0] || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              ) : (
-                <User className="h-5 w-5" />
-              )}
-              {isProfilePanelOpen && (
-                <span className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-primary border-2 border-white dark:border-gray-900"></span>
-              )}
-            </Button>
-
-            {/* Profile Panel */}
-            <ProfilePanel 
-              isOpen={isProfilePanelOpen} 
-              onClose={() => setIsProfilePanelOpen(false)}
-              triggerRef={profileBtnRef}
-            />
           </div>
         </div>
       </header>
