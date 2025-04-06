@@ -29,7 +29,7 @@ function Router() {
       </Route>
       
       <Route path="/">
-        <Layout>
+        <Layout title="StockVisionPro">
           <Home />
         </Layout>
       </Route>
