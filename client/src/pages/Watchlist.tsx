@@ -11,7 +11,6 @@ const Watchlist = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedStockId, setExpandedStockId] = useState<number | null>(null);
@@ -63,10 +62,8 @@ const Watchlist = () => {
     { id: 'highConfidence', label: '🎯 High AI Confidence' }
   ];
 
-  // Apply theme class to body
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
+  // Theme is now handled by the Header component
+  
 
   // Fetch user's watchlist - allow even for non-authenticated users
   const { data: watchlistData, isLoading: isLoadingWatchlist } = useQuery({
@@ -251,7 +248,6 @@ const Watchlist = () => {
   }, [getEnhancedWatchlistData, currentFilter, currentSort]);
 
   // Event handlers
-  const handleToggleTheme = useCallback(() => setIsDarkMode(prev => !prev), []);
   const handleToggleSearch = useCallback(() => setIsSearchVisible(prev => !prev), []);
   const handleSearch = useCallback((query: string) => setSearchQuery(query), []);
   const handleClearSearch = useCallback(() => setSearchQuery(''), []);

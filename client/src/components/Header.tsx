@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useTheme } from "@/lib/themeContext";
 
 interface HeaderProps {
   title?: string;
@@ -27,20 +28,10 @@ const Header = ({
 }: HeaderProps) => {
   const { user } = useAuth();
   const [location] = useLocation();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [notificationCount, setNotificationCount] = useState(3); // Default notification count for demo
   const [showNotificationModal, setShowNotificationModal] = useState(false);
-
-  // Apply theme class to body
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
-
-  // Toggle theme
-  const handleToggleTheme = useCallback(() => {
-    setIsDarkMode(prev => !prev);
-  }, []);
 
   // Clear notifications
   const handleClearNotifications = useCallback(() => {
@@ -88,9 +79,9 @@ const Header = ({
           <button 
             className="icon-button" 
             aria-label="Toggle Theme" 
-            onClick={handleToggleTheme}
+            onClick={toggleTheme}
           >
-            <i className={isDarkMode ? "fa-regular fa-sun" : "fa-regular fa-moon"}></i>
+            <i className={theme === 'dark' ? "fa-regular fa-sun" : "fa-regular fa-moon"}></i>
           </button>
           
           <div style={{ position: 'relative' }}>
@@ -105,18 +96,6 @@ const Header = ({
               <span className="badge">{notificationCount}</span>
             )}
           </div>
-          
-          {user ? (
-            <Link href="/profile" className="profile-button">
-              <div className="profile-avatar">
-                {user.username ? user.username.charAt(0).toUpperCase() : "U"}
-              </div>
-            </Link>
-          ) : (
-            <Link href="/login" className="login-button">
-              Login
-            </Link>
-          )}
         </div>
       </div>
 
