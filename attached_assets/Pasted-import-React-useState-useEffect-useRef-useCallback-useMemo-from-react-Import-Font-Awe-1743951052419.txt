@@ -1,0 +1,631 @@
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+// Import Font Awesome if not using CDN globally (optional, CDN works too)
+// import '@fortawesome/fontawesome-free/css/all.min.css';
+
+// --- Helper Functions & Data ---
+
+// Utility to combine class names conditionally (optional but helpful)
+const cn = (...classes) => classes.filter(Boolean).join(' ');
+
+// Function to parse number strings (simplified from original)
+const formatNumberString = (numStr) => {
+    if (typeof numStr !== 'string') return 0;
+    // More robust parsing might be needed for 'M', 'T', 'Cr' etc. in real sorting
+    return parseFloat(numStr.replace(/[^0-9.-]+/g, '')) || 0;
+};
+
+// Get CSS class based on signal for styling
+const getSignalClass = (signal) => {
+    const lowerSignal = signal?.toLowerCase() || '';
+    if (lowerSignal.includes('buy')) return 'signal-buy'; // Define .signal-buy in CSS
+    if (lowerSignal.includes('sell')) return 'signal-sell'; // Define .signal-sell in CSS
+    return 'signal-hold'; // Define .signal-hold in CSS
+};
+
+// Get CSS class for news impact
+const getNewsImpactClass = (impact) => {
+    if (impact === 'positive') return 'news-positive'; // Define .news-positive
+    if (impact === 'negative') return 'news-negative'; // Define .news-negative
+    return 'news-neutral'; // Define .news-neutral
+};
+
+// --- Initial Data (Consider moving to separate file or fetching) ---
+const initialIndicesData = [
+    { name: 'NIFTY 50', price: '22,403.44', change: '+120.35', percentChange: '+0.54%' },
+    { name: 'SENSEX', price: '73,648.62', change: '+364.50', percentChange: '+0.49%' },
+    { name: 'BANK NIFTY', price: '47,521.10', change: '-104.80', percentChange: '-0.22%' }
+];
+
+const initialTrendingStocksData = [
+    { id: 't1', symbol: 'RELIANCE', name: 'Reliance Industries', price: '2,850.75', change: '+2.4%', volume: '1.2M' },
+    { id: 't2', symbol: 'TCS', name: 'Tata Consultancy', price: '3,905.20', change: '+1.6%', volume: '620K' },
+    { id: 't3', symbol: 'HDFC', name: 'HDFC Bank', price: '1,678.45', change: '-0.3%', volume: '856K' },
+    { id: 't4', symbol: 'INFOSYS', name: 'Infosys Limited', price: '1,456.30', change: '+0.8%', volume: '750K' },
+    { id: 't5', symbol: 'HCLTECH', name: 'HCL Technologies', price: '1,245.70', change: '+3.2%', volume: '435K' }
+];
+
+const initialWatchlistStocksData = [
+    { id: '1', symbol: 'RELIANCE', name: 'Reliance Industries', price: '2,850.75', change: '+68.25', percentChange: '+2.45%', volume: '1.2M', marketCap: '₹18.32T', signal: 'BUY', sector: 'Oil & Gas', aiConfidence: 85, support: '₹2,780', resistance: '₹2,920', fiiActivity: '+₹240Cr', diiActivity: '+₹180Cr', weekLow: '₹2,180', weekHigh: '₹2,950', news: [{ id: 'n11', title: 'Reliance to acquire stake in EV startup', impact: 'positive', date: '1 day ago' }, { id: 'n12', title: 'Q4 results beat analyst expectations', impact: 'positive', date: '1 week ago' }] },
+    { id: '2', symbol: 'TATASTEEL', name: 'Tata Steel', price: '145.30', change: '-3.80', percentChange: '-2.55%', volume: '4.5M', marketCap: '₹1.78T', signal: 'HOLD', sector: 'Metal', aiConfidence: 62, support: '₹140', resistance: '₹152', fiiActivity: '-₹85Cr', diiActivity: '+₹120Cr', weekLow: '₹101', weekHigh: '₹160', news: [{ id: 'n21', title: 'Steel prices remain under pressure', impact: 'negative', date: '2 days ago' }, { id: 'n22', title: 'Company announces expansion plans', impact: 'positive', date: '1 week ago' }] },
+    { id: '3', symbol: 'INFY', name: 'Infosys Ltd', price: '1,456.30', change: '+11.25', percentChange: '+0.78%', volume: '0.75M', marketCap: '₹6.05T', signal: 'STRONG BUY', sector: 'IT', aiConfidence: 91, support: '₹1,420', resistance: '₹1,480', fiiActivity: '+₹310Cr', diiActivity: '+₹150Cr', weekLow: '₹1,185', weekHigh: '₹1,560', news: [{ id: 'n31', title: 'New AI partnership announced', impact: 'positive', date: '3 days ago' }, { id: 'n32', title: 'Wins $250M deal with European client', impact: 'positive', date: '1 week ago' }] },
+    { id: '4', symbol: 'SBIN', name: 'State Bank of India', price: '745.20', change: '-5.60', percentChange: '-0.75%', volume: '2.1M', marketCap: '₹6.65T', signal: 'SELL', sector: 'Banking', aiConfidence: 42, support: '₹730', resistance: '₹765', fiiActivity: '-₹210Cr', diiActivity: '-₹45Cr', weekLow: '₹570', weekHigh: '₹800', news: [{ id: 'n41', title: 'Rising NPAs concern analysts', impact: 'negative', date: '2 days ago' }, { id: 'n42', title: 'Bank announces new digital initiatives', impact: 'positive', date: '5 days ago' }] }
+];
+
+const initialNotificationsData = [
+    { id: 1, title: '🚀 RELIANCE breakout alert!', message: 'Stock has broken resistance at ₹2,850', time: '10 min ago' },
+    { id: 2, title: '📊 Market Update', message: 'Nifty 50 hits new all-time high', time: '1 hour ago' },
+    { id: 3, title: '🤖 AI Signal', message: 'Strong buy signal for TCS detected', time: '3 hours ago' }
+];
+
+const sortOptions = [
+    { id: 'name', label: '📝 Name' },
+    { id: 'price', label: '💰 Price' },
+    { id: 'change', label: '📈 Change %' },
+    { id: 'volume', label: '📊 Volume' },
+    { id: 'aiConfidence', label: '🤖 AI Confidence' }
+];
+
+const filterOptions = [
+    { id: 'all', label: '🌟 All Stocks' },
+    { id: 'gainers', label: '📈 Top Gainers' },
+    { id: 'losers', label: '📉 Top Losers' },
+    { id: 'highVolume', label: '📊 High Volume' },
+    { id: 'highConfidence', label: '🎯 High AI Confidence' }
+];
+
+// --- Components ---
+
+const Header = React.memo(({ onToggleTheme, onToggleSearch, onShowNotifications, notificationCount, isDarkMode }) => {
+    return (
+        <div className="header">
+            <h1 className="header-title">📈 Market Watchlist</h1>
+            <div className="header-buttons">
+                <button className="icon-button" aria-label="Toggle Theme" onClick={onToggleTheme}>
+                    <i className={fa-regular ${isDarkMode ? 'fa-sun' : 'fa-moon'}}></i>
+                </button>
+                <div style={{ position: 'relative' }}>
+                    <button className="icon-button" aria-label="Show Notifications" onClick={onShowNotifications}>
+                        <i className="fa-regular fa-bell"></i>
+                    </button>
+                    {notificationCount > 0 && (
+                        <span className="badge">{notificationCount}</span>
+                    )}
+                </div>
+                <button className="icon-button" aria-label="Toggle Search" onClick={onToggleSearch}>
+                    <i className="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+        </div>
+    );
+});
+
+const SearchBar = React.memo(({ isVisible, query, onSearch, onClearSearch }) => {
+    return (
+        <div className={cn('search-bar-container', isVisible && 'show')}>
+            <div className="search-bar">
+                <i className="fa-solid fa-magnifying-glass search-icon"></i>
+                <input
+                    type="text"
+                    id="search-input"
+                    className="search-input"
+                    placeholder="Search stocks by name or symbol..."
+                    value={query}
+                    onChange={(e) => onSearch(e.target.value)}
+                />
+                {query && (
+                    <button onClick={onClearSearch} className="clear-search-button" aria-label="Clear Search">
+                        <i className="fa-solid fa-circle-xmark"></i>
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+});
+
+const IndicesSection = React.memo(({ indices }) => {
+    return (
+        <div className="indices-container">
+            {indices.map((item, index) => ( // Use index as key if no stable ID
+                <div className="index-card" key={item.name || index}>
+                    <div className="index-name">{item.name}</div>
+                    <div className="index-price">₹{item.price}</div>
+                    <div className={index-change ${item.percentChange?.startsWith('+') ? 'positive' : 'negative'}}>
+                        {item.change} ({item.percentChange})
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+});
+
+const TrendingSection = React.memo(({ trendingStocks }) => {
+    return (
+        <div className="section-container">
+            <div className="section-header">
+                <i className="fa-solid fa-arrow-trend-up section-icon"></i>
+                <h2 className="section-title">🔥 Trending Now</h2>
+            </div>
+            <div className="trending-container">
+                {trendingStocks.map(item => (
+                    <div className="trending-card" key={item.id || item.symbol}>
+                        <div className="trending-name">{item.name}</div>
+                        <div className="trending-symbol">{item.symbol}</div>
+                        <div className={trending-change ${item.change?.startsWith('+') ? 'positive' : 'negative'}}>
+                            {item.change}
+                        </div>
+                        <div className="trending-volume">Vol: {item.volume}</div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+});
+
+const FilterBar = React.memo(({ onShowFilterModal, onShowSortModal, onShowAddStockModal }) => {
+    return (
+        <div className="filter-bar-container">
+            <div className="filter-buttons-group">
+                <button className="filter-button" onClick={onShowFilterModal}>
+                    <i className="fa-solid fa-filter filter-icon"></i>
+                    <span className="filter-button-text">Filter</span>
+                </button>
+                <button className="filter-button" onClick={onShowSortModal}>
+                    <i className="fa-solid fa-sort filter-icon"></i>
+                    <span className="filter-button-text">Sort</span>
+                </button>
+            </div>
+            <button className="add-button" onClick={onShowAddStockModal}>
+                <i className="fa-solid fa-plus add-icon"></i>
+                Add Stock
+            </button>
+        </div>
+    );
+});
+
+const StockCard = React.memo(({ stock, isExpanded, onToggleExpand }) => {
+    const changeIsPositive = stock.percentChange?.startsWith('+');
+    const fiiIsPositive = stock.fiiActivity?.startsWith('+');
+    const diiIsPositive = stock.diiActivity?.startsWith('+');
+
+    return (
+        <div className={cn('stock-card', isExpanded && 'expanded')} id={stock-${stock.id}}>
+            <div className="stock-card-clickable-area" onClick={() => onToggleExpand(stock.id)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggleExpand(stock.id)}>
+                <div className="stock-card-header">
+                    <div>
+                        <div className="stock-title-row">
+                            <span className="stock-name">{stock.name}</span>
+                            <span className="stock-symbol">{stock.symbol}</span>
+                        </div>
+                        <div className="stock-price">₹{stock.price}</div>
+                        <div className={cn('stock-change', changeIsPositive ? 'positive' : 'negative')}>
+                            {stock.change} ({stock.percentChange})
+                        </div>
+                        <div className="stock-volume">
+                            Volume: {stock.volume} | Mkt Cap: {stock.marketCap}
+                        </div>
+                    </div>
+                    <div className="stock-right-side">
+                        <span className={cn("signal-badge", getSignalClass(stock.signal))}>{stock.signal || 'N/A'}</span>
+                        <div className="sector-text">{stock.sector || 'N/A'}</div>
+                    </div>
+                </div>
+                <div className="expand-button-container">
+                    <i className={fa-solid ${isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}}></i>
+                </div>
+            </div>
+
+            {isExpanded && (
+                <div className="expanded-section">
+                    {/* AI Confidence */}
+                    <div className="expanded-section-item">
+                        <div className="expanded-label">🤖 AI Confidence</div>
+                        <div className="progress-bar-wrapper">
+                            <div className="progress-bar-container">
+                                <div className="progress-bar" style={{ width: ${stock.aiConfidence || 0}% }}
+                                     aria-valuenow={stock.aiConfidence || 0} aria-valuemin="0" aria-valuemax="100" role="progressbar" aria-label={AI Confidence ${stock.aiConfidence || 0}%}></div>
+                            </div>
+                            <span className="confidence-text">{stock.aiConfidence || 0}%</span>
+                        </div>
+                    </div>
+
+                    {/* Tech Levels */}
+                    <div className="tech-levels-container">
+                        <div className="level-item">
+                            <div className="expanded-label">📊 Support</div>
+                            <div className="level-value">{stock.support || 'N/A'}</div>
+                        </div>
+                        <div className="level-item">
+                            <div className="expanded-label">📈 Resistance</div>
+                            <div className="level-value">{stock.resistance || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    {/* Institutional Activity */}
+                    <div className="institutional-container">
+                        <div className="institutional-item">
+                            <div className="expanded-label">🏢 FII Activity</div>
+                            <div className={cn('activity-value', fiiIsPositive ? 'positive' : 'negative')}>{stock.fiiActivity || 'N/A'}</div>
+                        </div>
+                        <div className="institutional-item">
+                            <div className="expanded-label">🏛 DII Activity</div>
+                            <div className={cn('activity-value', diiIsPositive ? 'positive' : 'negative')}>{stock.diiActivity || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    {/* 52 Week Range */}
+                    <div className="week-range-container">
+                        <div className="expanded-label">📅 52 Week Range</div>
+                        <div className="range-bar-container">
+                            <span className="range-value low">{stock.weekLow || 'N/A'}</span>
+                            <div className="range-bar"></div>
+                            <span className="range-value high">{stock.weekHigh || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    {/* News */}
+                    <div className="news-container">
+                        <div className="expanded-label">📰 Recent News</div>
+                        {(stock.news && stock.news.length > 0) ? (
+                            stock.news.map(newsItem => (
+                                <div className="news-item" key={newsItem.id || newsItem.title}>
+                                    <div className={cn("news-title", getNewsImpactClass(newsItem.impact))}>
+                                        {newsItem.title}
+                                    </div>
+                                    <div className="news-date">{newsItem.date}</div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="news-date">No recent news available.</div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+});
+
+const Watchlist = React.memo(({ stocks, expandedStockId, onToggleExpand }) => {
+    return (
+        <div className="watchlist-container" id="watchlist-container">
+            {stocks.length > 0 ? (
+                 stocks.map(stock => (
+                    <StockCard
+                        key={stock.id}
+                        stock={stock}
+                        isExpanded={stock.id === expandedStockId}
+                        onToggleExpand={onToggleExpand}
+                    />
+                ))
+            ) : (
+                <p style={{ textAlign: 'center', padding: '40px 0', color: 'var(--subtext)' }}>No stocks found matching your criteria.</p>
+            )}
+        </div>
+    );
+});
+
+const Modal = React.memo(({ id, isVisible, onClose, children }) => {
+    const handleOverlayClick = (event) => {
+        if (event.target.id === id) {
+            onClose();
+        }
+    };
+
+    useEffect(() => {
+        const handleEsc = (event) => {
+           if (event.key === 'Escape') {
+              onClose();
+           }
+        };
+        if (isVisible) {
+            document.addEventListener('keydown', handleEsc);
+        }
+        return () => {
+            document.removeEventListener('keydown', handleEsc);
+        };
+     }, [isVisible, onClose]);
+
+
+    if (!isVisible) return null;
+
+    return (
+        <div id={id} className="modal-overlay show" onClick={handleOverlayClick}>
+            {children}
+        </div>
+    );
+});
+
+const SortFilterModalContent = React.memo(({ title, options, currentSelection, onSelect }) => {
+    return (
+        <div className="modal-content">
+            <h2 className="modal-title">{title}</h2>
+            <div id={${title.toLowerCase()}-options-container}>
+                {options.map(option => (
+                    <div
+                        key={option.id}
+                        className={cn('modal-option', currentSelection === option.id && 'selected')}
+                        onClick={() => onSelect(option.id)}
+                        role="button" tabIndex={0} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(option.id)}
+                    >
+                        <span className="checkmark">✓</span>
+                        <span className="modal-option-text">{option.label}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+});
+
+const AddStockModalContent = React.memo(({ onClose, onAddStock }) => {
+    const symbolInputRef = useRef(null);
+    const nameInputRef = useRef(null);
+
+    const handleAdd = () => {
+        const symbol = symbolInputRef.current?.value.trim().toUpperCase();
+        const name = nameInputRef.current?.value.trim();
+        if (symbol && name) {
+            onAddStock(symbol, name);
+            symbolInputRef.current.value = ''; // Clear input
+            nameInputRef.current.value = '';   // Clear input
+        } else {
+            alert('Please enter both stock symbol and company name.');
+        }
+    };
+
+    return (
+        <div className="add-stock-content">
+            <div className="add-stock-header">
+                <h2 className="add-stock-title">📌 Add New Stock</h2>
+                <button onClick={onClose} className="close-modal-button" aria-label="Close Add Stock Modal">
+                    <i className="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div className="add-stock-form">
+                <div className="input-group">
+                    <label className="input-label" htmlFor="stock-symbol-input">Stock Symbol</label>
+                    <input ref={symbolInputRef} type="text" className="input" id="stock-symbol-input" placeholder="e.g., RELIANCE.NS" />
+                </div>
+                <div className="input-group">
+                    <label className="input-label" htmlFor="company-name-input">Company Name</label>
+                    <input ref={nameInputRef} type="text" className="input" id="company-name-input" placeholder="e.g., Reliance Industries" />
+                </div>
+                <div className="modal-buttons">
+                    <button className="cancel-button" onClick={onClose}>Cancel</button>
+                    <button className="confirm-button" onClick={handleAdd}>Add Stock</button>
+                </div>
+            </div>
+        </div>
+    );
+});
+
+const NotificationsModalContent = React.memo(({ notifications, onClose, onClear }) => {
+    return (
+        <div className="notifications-content">
+            <div className="notifications-header">
+                <h2 className="notifications-title">🔔 Notifications</h2>
+                {notifications.length > 0 && (
+                    <button className="clear-button" onClick={onClear}>Mark all as read</button>
+                )}
+                 <button onClick={onClose} className="close-modal-button" style={{ marginLeft: 'auto' }} aria-label="Close Notifications Modal">
+                    <i className="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div className="notifications-list">
+                {notifications.length > 0 ? (
+                     notifications.map(item => (
+                        <div className="notification-item" key={item.id}>
+                            <div className="notification-title">{item.title}</div>
+                            <div className="notification-message">{item.message}</div>
+                            <div className="notification-time">{item.time}</div>
+                        </div>
+                    ))
+                ) : (
+                    <p style={{ textAlign: 'center', padding: '30px 0', color: 'var(--subtext)' }}>No new notifications.</p>
+                )}
+            </div>
+        </div>
+    );
+});
+
+
+// --- Main App Component ---
+
+function App() {
+    // --- State ---
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [expandedStockId, setExpandedStockId] = useState(null);
+    const [currentSort, setCurrentSort] = useState('name');
+    const [currentFilter, setCurrentFilter] = useState('all');
+    const [watchlistStocks, setWatchlistStocks] = useState(initialWatchlistStocksData);
+    const [notifications, setNotifications] = useState(initialNotificationsData);
+    const [notificationCount, setNotificationCount] = useState(initialNotificationsData.length);
+    const [activeModal, setActiveModal] = useState(null); // 'sort', 'filter', 'add', 'notifications', or null
+
+    // --- Effects ---
+    // Update notification count when notifications change
+    useEffect(() => {
+        setNotificationCount(notifications.length);
+    }, [notifications]);
+
+    // Apply theme class to body or main container
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+         // Or target a specific container if you prefer
+         // const container = document.getElementById('app-container');
+         // if (container) container.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    }, [isDarkMode]);
+
+
+    // --- Memoized Filtered/Sorted Data ---
+    const filteredAndSortedWatchlist = useMemo(() => {
+        let displayStocks = [...watchlistStocks];
+
+        // 1. Filter by Search Query
+        if (searchQuery) {
+            const lowerCaseQuery = searchQuery.toLowerCase();
+            displayStocks = displayStocks.filter(stock =>
+                stock.name.toLowerCase().includes(lowerCaseQuery) ||
+                stock.symbol.toLowerCase().includes(lowerCaseQuery)
+            );
+        }
+
+        // 2. Filter by Category
+        if (currentFilter !== 'all') {
+            switch (currentFilter) {
+                case 'gainers':
+                    displayStocks = displayStocks.filter(stock => formatNumberString(stock.percentChange) > 0);
+                    break;
+                case 'losers':
+                    displayStocks = displayStocks.filter(stock => formatNumberString(stock.percentChange) < 0);
+                    break;
+                case 'highVolume': // Example: Volume > 1M (needs better parsing)
+                    displayStocks = displayStocks.filter(stock => formatNumberString(stock.volume?.replace('M','')) > 1); // Simplified
+                    break;
+                case 'highConfidence': // Example: Confidence > 80
+                    displayStocks = displayStocks.filter(stock => (stock.aiConfidence || 0) > 80);
+                    break;
+            }
+        }
+
+        // 3. Sort
+        displayStocks.sort((a, b) => {
+            switch (currentSort) {
+                case 'price':
+                    return formatNumberString(b.price) - formatNumberString(a.price);
+                case 'change':
+                    return formatNumberString(b.percentChange) - formatNumberString(a.percentChange);
+                case 'volume': // Needs better parsing for 'M', 'K' etc.
+                    return formatNumberString(b.volume) - formatNumberString(a.volume);
+                case 'aiConfidence':
+                    return (b.aiConfidence || 0) - (a.aiConfidence || 0);
+                case 'name':
+                default:
+                    return a.name.localeCompare(b.name);
+            }
+        });
+
+        return displayStocks;
+
+    }, [watchlistStocks, searchQuery, currentFilter, currentSort]);
+
+
+    // --- Event Handlers (useCallback to prevent unnecessary re-renders) ---
+
+    const handleToggleTheme = useCallback(() => setIsDarkMode(prev => !prev), []);
+
+    const handleToggleSearch = useCallback(() => setIsSearchVisible(prev => !prev), []);
+
+    const handleSearch = useCallback((query) => setSearchQuery(query), []);
+
+    const handleClearSearch = useCallback(() => setSearchQuery(''), []);
+
+    const handleToggleStockExpansion = useCallback((id) => {
+        setExpandedStockId(prevId => (prevId === id ? null : id));
+    }, []);
+
+    const handleShowModal = useCallback((modalType) => setActiveModal(modalType), []);
+
+    const handleCloseModal = useCallback(() => setActiveModal(null), []);
+
+    const handleApplySort = useCallback((sortId) => {
+        setCurrentSort(sortId);
+        setActiveModal(null); // Close modal after selection
+    }, []);
+
+    const handleApplyFilter = useCallback((filterId) => {
+        setCurrentFilter(filterId);
+        setActiveModal(null); // Close modal after selection
+    }, []);
+
+    const handleAddStock = useCallback((symbol, name) => {
+        const newStock = {
+            id: Date.now().toString(), // Simple unique ID
+            symbol: symbol,
+            name: name,
+            price: 'N/A', // Fetch real data later
+            change: '0.00', percentChange: '0.00%', volume: 'N/A', marketCap: 'N/A',
+            signal: 'N/A', sector: 'N/A', aiConfidence: 0, support: 'N/A',
+            resistance: 'N/A', fiiActivity: 'N/A', diiActivity: 'N/A',
+            weekLow: 'N/A', weekHigh: 'N/A', news: []
+        };
+        setWatchlistStocks(prevStocks => [newStock, ...prevStocks]);
+        setActiveModal(null); // Close modal
+    }, []);
+
+    const handleClearNotifications = useCallback(() => {
+        setNotifications([]);
+        // Optionally keep the modal open or close it:
+        // setActiveModal(null);
+    }, []);
+
+
+    return (
+        <div className="container" id="app-container"> {/* Add id if targeting specific container for theme */}
+            <Header
+                onToggleTheme={handleToggleTheme}
+                onToggleSearch={handleToggleSearch}
+                onShowNotifications={() => handleShowModal('notifications')}
+                notificationCount={notificationCount}
+                isDarkMode={isDarkMode}
+            />
+
+            <SearchBar
+                isVisible={isSearchVisible}
+                query={searchQuery}
+                onSearch={handleSearch}
+                onClearSearch={handleClearSearch}
+            />
+
+            {/* Scrollable Content */}
+            <div className="scroll-content">
+                <IndicesSection indices={initialIndicesData} />
+                <TrendingSection trendingStocks={initialTrendingStocksData} />
+                <FilterBar
+                    onShowFilterModal={() => handleShowModal('filter')}
+                    onShowSortModal={() => handleShowModal('sort')}
+                    onShowAddStockModal={() => handleShowModal('add')}
+                />
+                <Watchlist
+                    stocks={filteredAndSortedWatchlist}
+                    expandedStockId={expandedStockId}
+                    onToggleExpand={handleToggleStockExpansion}
+                />
+            </div>
+
+            {/* Modals */}
+            <Modal id="sort-modal" isVisible={activeModal === 'sort'} onClose={handleCloseModal}>
+                <SortFilterModalContent
+                    title="Sort By"
+                    options={sortOptions}
+                    currentSelection={currentSort}
+                    onSelect={handleApplySort}
+                />
+            </Modal>
+
+            <Modal id="filter-modal" isVisible={activeModal === 'filter'} onClose={handleCloseModal}>
+                 <SortFilterModalContent
+                    title="Filter"
+                    options={filterOptions}
+                    currentSelection={currentFilter}
+                    onSelect={handleApplyFilter}
+                />
+            </Modal>
+
+            <Modal id="add-stock-modal" isVisible={activeModal === 'add'} onClose={handleCloseModal}>
+                 <AddStockModalContent onClose={handleCloseModal} onAddStock={handleAddStock} />
+            </Modal>
+
+            <Modal id="notifications-modal" isVisible={activeModal === 'notifications'} onClose={handleCloseModal}>
+                 <NotificationsModalContent
+                    notifications={notifications}
+                    onClose={handleCloseModal}
+                    onClear={handleClearNotifications}
+                />
+            </Modal>
+
+        </div>
+    );
+}
+
+export default App;

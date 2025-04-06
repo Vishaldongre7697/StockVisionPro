@@ -41,7 +41,7 @@
   .signal-hold {
     @apply bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full;
   }
-
+  
   /* Navigation and layout */
   .bottom-nav {
     @apply fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-around items-center p-2 z-50;
@@ -146,5 +146,439 @@
     100% {
       transform: translateX(100%);
     }
+  }
+  
+  /* Modern Watchlist Components */
+  .header {
+    @apply flex justify-between items-center p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700;
+  }
+  
+  .header-title {
+    @apply text-xl font-bold;
+  }
+  
+  .header-buttons {
+    @apply flex items-center gap-3;
+  }
+  
+  .icon-button {
+    @apply h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-600 transition-colors;
+  }
+  
+  .badge {
+    @apply absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold h-5 w-5 flex items-center justify-center rounded-full;
+  }
+  
+  .search-bar-container {
+    @apply p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 max-h-0 overflow-hidden transition-all duration-300;
+  }
+  
+  .search-bar-container.show {
+    @apply max-h-24;
+  }
+  
+  .search-bar {
+    @apply relative flex items-center;
+  }
+  
+  .search-icon {
+    @apply absolute left-4 text-gray-400;
+  }
+  
+  .search-input {
+    @apply w-full p-3 pl-12 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
+  }
+  
+  .clear-search-button {
+    @apply absolute right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300;
+  }
+  
+  .indices-container {
+    @apply flex overflow-x-auto gap-3 p-4 bg-white dark:bg-gray-800;
+  }
+  
+  .index-card {
+    @apply min-w-[160px] p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600 flex flex-col;
+  }
+  
+  .index-name {
+    @apply font-medium text-sm text-gray-600 dark:text-gray-300;
+  }
+  
+  .index-price {
+    @apply text-lg font-bold mt-1;
+  }
+  
+  .index-change {
+    @apply text-sm mt-1;
+  }
+  
+  .index-change.positive {
+    @apply text-green-600 dark:text-green-400;
+  }
+  
+  .index-change.negative {
+    @apply text-red-600 dark:text-red-400;
+  }
+  
+  .section-container {
+    @apply p-4 bg-white dark:bg-gray-800;
+  }
+  
+  .section-header {
+    @apply flex items-center gap-2 mb-3;
+  }
+  
+  .section-icon {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+  
+  .section-title {
+    @apply text-lg font-bold;
+  }
+  
+  .trending-container {
+    @apply flex overflow-x-auto gap-3 pb-2;
+  }
+  
+  .trending-card {
+    @apply min-w-[180px] p-3 bg-white dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600 shadow-sm;
+  }
+  
+  .trending-name {
+    @apply font-medium;
+  }
+  
+  .trending-symbol {
+    @apply text-sm text-gray-500 dark:text-gray-400 mb-2;
+  }
+  
+  .trending-change {
+    @apply text-sm font-bold mt-1;
+  }
+  
+  .trending-change.positive {
+    @apply text-green-600 dark:text-green-400;
+  }
+  
+  .trending-change.negative {
+    @apply text-red-600 dark:text-red-400;
+  }
+  
+  .trending-volume {
+    @apply text-xs text-gray-500 dark:text-gray-400 mt-1;
+  }
+  
+  .filter-bar-container {
+    @apply flex justify-between items-center p-4 bg-white dark:bg-gray-800 border-t border-b border-gray-100 dark:border-gray-700;
+  }
+  
+  .filter-buttons-group {
+    @apply flex gap-2;
+  }
+  
+  .filter-button {
+    @apply flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600;
+  }
+  
+  .filter-icon {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+  
+  .add-button {
+    @apply flex items-center gap-2 px-4 py-2 bg-blue-600 dark:bg-blue-500 rounded-lg text-white hover:bg-blue-700 dark:hover:bg-blue-600;
+  }
+  
+  .add-icon {
+    @apply text-white;
+  }
+  
+  .watchlist-container {
+    @apply p-4 bg-white dark:bg-gray-800;
+  }
+  
+  .stock-card {
+    @apply mb-4 bg-white dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600 shadow-sm overflow-hidden;
+  }
+  
+  .stock-card.expanded {
+    @apply border-blue-200 dark:border-blue-500;
+  }
+  
+  .stock-card-clickable-area {
+    @apply w-full cursor-pointer p-4;
+  }
+  
+  .stock-card-header {
+    @apply flex justify-between gap-4;
+  }
+  
+  .stock-title-row {
+    @apply flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2;
+  }
+  
+  .stock-name {
+    @apply font-medium text-gray-800 dark:text-gray-200;
+  }
+  
+  .stock-symbol {
+    @apply text-sm text-gray-500 dark:text-gray-400;
+  }
+  
+  .stock-price {
+    @apply text-lg font-bold mt-1;
+  }
+  
+  .stock-change {
+    @apply text-sm mt-1;
+  }
+  
+  .stock-change.positive {
+    @apply text-green-600 dark:text-green-400 font-medium;
+  }
+  
+  .stock-change.negative {
+    @apply text-red-600 dark:text-red-400 font-medium;
+  }
+  
+  .stock-volume {
+    @apply text-xs text-gray-500 dark:text-gray-400 mt-1;
+  }
+  
+  .stock-right-side {
+    @apply flex flex-col items-end;
+  }
+  
+  .signal-badge {
+    @apply px-3 py-1 rounded-full text-xs font-bold;
+  }
+  
+  .sector-text {
+    @apply text-xs text-gray-500 dark:text-gray-400 mt-2;
+  }
+  
+  .expand-button-container {
+    @apply flex justify-center mt-2 text-gray-400;
+  }
+  
+  .expanded-section {
+    @apply p-4 pt-0 bg-gray-50 dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 space-y-4;
+  }
+  
+  .expanded-section-item {
+    @apply mb-3;
+  }
+  
+  .expanded-label {
+    @apply text-sm font-medium text-gray-600 dark:text-gray-300 mb-2;
+  }
+  
+  .progress-bar-wrapper {
+    @apply flex items-center gap-3;
+  }
+  
+  .progress-bar-container {
+    @apply flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden;
+  }
+  
+  .progress-bar {
+    @apply h-full bg-blue-600 dark:bg-blue-500 rounded-full;
+  }
+  
+  .confidence-text {
+    @apply text-sm font-medium text-blue-600 dark:text-blue-400 min-w-[40px] text-right;
+  }
+  
+  .tech-levels-container {
+    @apply flex gap-6;
+  }
+  
+  .level-item {
+    @apply flex-1;
+  }
+  
+  .level-value {
+    @apply font-medium text-gray-800 dark:text-gray-200;
+  }
+  
+  .institutional-container {
+    @apply flex gap-6;
+  }
+  
+  .institutional-item {
+    @apply flex-1;
+  }
+  
+  .activity-value {
+    @apply font-medium;
+  }
+  
+  .activity-value.positive {
+    @apply text-green-600 dark:text-green-400;
+  }
+  
+  .activity-value.negative {
+    @apply text-red-600 dark:text-red-400;
+  }
+  
+  .week-range-container {
+    @apply mb-3;
+  }
+  
+  .range-bar-container {
+    @apply flex items-center gap-2;
+  }
+  
+  .range-bar {
+    @apply flex-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-2;
+  }
+  
+  .range-value {
+    @apply text-sm text-gray-500 dark:text-gray-400;
+  }
+  
+  .news-container {
+    @apply mb-3;
+  }
+  
+  .news-item {
+    @apply mt-2 pb-2 border-b border-gray-100 dark:border-gray-700 last:border-0;
+  }
+  
+  .news-title {
+    @apply text-sm font-medium mb-1;
+  }
+  
+  .news-positive {
+    @apply text-green-600 dark:text-green-400;
+  }
+  
+  .news-negative {
+    @apply text-red-600 dark:text-red-400;
+  }
+  
+  .news-neutral {
+    @apply text-gray-800 dark:text-gray-200;
+  }
+  
+  .news-date {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+  }
+  
+  /* Modal Styles */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 opacity-0 pointer-events-none;
+  }
+  
+  .modal-overlay.show {
+    @apply opacity-100 pointer-events-auto;
+  }
+  
+  .modal-content {
+    @apply w-[90%] max-w-md bg-white dark:bg-gray-800 rounded-xl p-5 shadow-xl border border-gray-100 dark:border-gray-700;
+  }
+  
+  .modal-title {
+    @apply text-lg font-bold mb-4 text-center;
+  }
+  
+  .modal-option {
+    @apply flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 mb-2 border border-transparent;
+  }
+  
+  .modal-option.selected {
+    @apply bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800;
+  }
+  
+  .checkmark {
+    @apply mr-3 text-blue-600 dark:text-blue-400 opacity-0;
+  }
+  
+  .modal-option.selected .checkmark {
+    @apply opacity-100;
+  }
+  
+  .modal-option-text {
+    @apply text-gray-800 dark:text-gray-200;
+  }
+  
+  .add-stock-content {
+    @apply w-[90%] max-w-md bg-white dark:bg-gray-800 rounded-xl p-5 shadow-xl border border-gray-100 dark:border-gray-700;
+  }
+  
+  .add-stock-header {
+    @apply flex justify-between items-center mb-4;
+  }
+  
+  .add-stock-title {
+    @apply text-lg font-bold;
+  }
+  
+  .close-modal-button {
+    @apply text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200;
+  }
+  
+  .add-stock-form {
+    @apply space-y-4;
+  }
+  
+  .input-group {
+    @apply space-y-1;
+  }
+  
+  .input-label {
+    @apply text-sm font-medium text-gray-600 dark:text-gray-400;
+  }
+  
+  .input {
+    @apply w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
+  }
+  
+  .modal-buttons {
+    @apply flex gap-3 mt-6;
+  }
+  
+  .cancel-button {
+    @apply flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600;
+  }
+  
+  .confirm-button {
+    @apply flex-1 px-4 py-2 bg-blue-600 dark:bg-blue-500 rounded-lg text-white hover:bg-blue-700 dark:hover:bg-blue-600;
+  }
+  
+  .notifications-content {
+    @apply w-[90%] max-w-md bg-white dark:bg-gray-800 rounded-xl p-5 shadow-xl border border-gray-100 dark:border-gray-700;
+  }
+  
+  .notifications-header {
+    @apply flex items-center mb-4;
+  }
+  
+  .notifications-title {
+    @apply text-lg font-bold mr-auto;
+  }
+  
+  .clear-button {
+    @apply text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-500 mr-4;
+  }
+  
+  .notifications-list {
+    @apply max-h-[60vh] overflow-y-auto;
+  }
+  
+  .notification-item {
+    @apply p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-2;
+  }
+  
+  .notification-title {
+    @apply font-medium mb-1;
+  }
+  
+  .notification-message {
+    @apply text-sm text-gray-600 dark:text-gray-300 mb-2;
+  }
+  
+  .notification-time {
+    @apply text-xs text-gray-500 dark:text-gray-400;
   }
 }
