@@ -119,4 +119,32 @@
   .dashboard-grid-item-half {
     @apply col-span-1 md:col-span-1 lg:col-span-2;
   }
+  
+  /* Loading Animations */
+  .loading-skeleton {
+    @apply relative overflow-hidden bg-gray-200 dark:bg-gray-700 before:absolute before:inset-0;
+  }
+  
+  .loading-skeleton::before {
+    content: '';
+    position: absolute;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    animation: loading-skeleton 1.5s infinite;
+    width: 100%;
+    height: 100%;
+  }
+  
+  @keyframes loading-skeleton {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
 }
