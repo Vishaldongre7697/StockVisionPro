@@ -246,11 +246,11 @@ const Home = () => {
                   <Progress 
                     value={(stock.buyQuantity / stock.volume) * 100}
                     className="h-2 bg-gray-100"
-                    indicatorClassName={stock.changePercent > 0 ? "bg-green-500" : "bg-red-500"}
+                    indicatorClassName={stock.changePercent > 0 ? "bg-blue-500" : "bg-orange-500"}
                   />
                   <div className="flex justify-between items-center text-xs text-gray-500">
                     <span>Buy Ratio: {((stock.buyQuantity / stock.volume) * 100).toFixed(1)}%</span>
-                    <span className={stock.changePercent > 0 ? "text-green-600" : "text-red-600"}>
+                    <span className={stock.changePercent > 0 ? "text-blue-600" : "text-orange-600"}>
                       {stock.changePercent > 0 ? "Bullish" : "Bearish"} Trend
                     </span>
                   </div>

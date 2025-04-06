@@ -140,64 +140,76 @@ const Watchlist = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Notifications & Search */}
-      <div className="flex justify-between items-center gap-2">
-        <div className="w-full">
-          <div className="relative">
+    <div className="space-y-6 bg-white">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Your Watchlist</h1>
+          <p className="text-sm text-muted-foreground">Track and manage your favorite stocks</p>
+        </div>
+        
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Add stocks to watchlist..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4"
+              className="pl-10 pr-4 bg-gray-50 border-gray-100"
             />
           </div>
-        </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="icon" className="flex-shrink-0">
-              <Bell className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-3">
-            <div className="space-y-2">
-              <h4 className="font-medium">Price Alerts</h4>
-              <p className="text-sm text-muted-foreground">
-                Configure price alerts for your watchlist stocks
-              </p>
-              <div className="mt-4 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">RELIANCE</span>
-                  <Badge variant="outline" className="text-xs">₹2,950</Badge>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon" className="flex-shrink-0 border-blue-200">
+                <Bell className="h-4 w-4 text-blue-600" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-3 bg-white border border-gray-100 shadow-lg">
+              <div className="space-y-2">
+                <h4 className="font-medium">Price Alerts</h4>
+                <p className="text-sm text-muted-foreground">
+                  Configure price alerts for your watchlist stocks
+                </p>
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">RELIANCE</span>
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">₹2,950</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">TCS</span>
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">₹3,800</Badge>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">TCS</span>
-                  <Badge variant="outline" className="text-xs">₹3,800</Badge>
-                </div>
+                <Button size="sm" variant="outline" className="w-full mt-2 border-blue-200 text-blue-700">
+                  Add New Alert
+                </Button>
               </div>
-              <Button className="w-full mt-2" size="sm">Add New Alert</Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
       
       {/* Search Results */}
       {searchQuery && filteredStocks.length > 0 && (
-        <Card className="mb-4">
+        <Card className="mb-4 bg-white border border-gray-100 shadow-sm">
           <CardContent className="p-3 max-h-60 overflow-y-auto">
             {filteredStocks.map((stock) => (
               <button
                 key={stock.id}
-                className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md flex justify-between items-center mb-1"
+                className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md flex justify-between items-center mb-1"
                 onClick={() => handleSelectStock(stock)}
               >
-                <div>
-                  <div className="font-medium">{stock.symbol}</div>
-                  <div className="text-xs text-muted-foreground">{stock.name}</div>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-medium">
+                    {stock.symbol.substring(0, 2)}
+                  </div>
+                  <div>
+                    <div className="font-medium">{stock.symbol}</div>
+                    <div className="text-xs text-muted-foreground">{stock.name}</div>
+                  </div>
                 </div>
-                <Plus className="h-4 w-4 text-primary" />
+                <Plus className="h-4 w-4 text-blue-600" />
               </button>
             ))}
           </CardContent>
@@ -206,21 +218,27 @@ const Watchlist = () => {
       
       {/* Selected Stock */}
       {selectedStock && (
-        <Card className="mb-4 border-primary/50">
+        <Card className="mb-4 bg-white border border-blue-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-medium">{selectedStock.symbol}</h3>
-                <p className="text-sm text-muted-foreground">{selectedStock.name}</p>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-medium">
+                  {selectedStock.symbol.substring(0, 2)}
+                </div>
+                <div>
+                  <h3 className="font-medium">{selectedStock.symbol}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedStock.name}</p>
+                </div>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleAddToWatchlist}>
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={handleAddToWatchlist}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add to Watchlist
                 </Button>
                 <Button 
                   size="sm" 
-                  variant="ghost" 
+                  variant="outline"
+                  className="border-gray-200" 
                   onClick={() => setSelectedStock(null)}
                 >
                   <X className="h-4 w-4" />
@@ -231,41 +249,70 @@ const Watchlist = () => {
         </Card>
       )}
       
-      {/* Watchlist Items */}
-      {isLoadingWatchlist ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <WatchlistItemSkeleton key={i} />
-          ))}
-        </div>
-      ) : watchlist && watchlist.length > 0 ? (
-        <div className="space-y-4">
-          {watchlist.map((stock) => (
-            <WatchlistItem 
-              key={stock.id} 
-              stock={stock} 
-              onRemove={() => removeFromWatchlist.mutate(stock.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground mb-4">Your watchlist is empty</p>
-          <p className="text-sm text-muted-foreground">
-            Search for stocks above to add them to your watchlist
-          </p>
-        </div>
-      )}
+      {/* Watchlist Summary Card */}
+      <Card className="bg-white border border-gray-100 shadow-sm">
+        <CardHeader className="pb-2 border-b border-gray-100">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg font-bold">Watchlist Summary</CardTitle>
+            <div className="flex gap-2">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                {watchlist?.filter(s => (s.changePercent || 0) > 0).length || 0} Gaining
+              </Badge>
+              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                {watchlist?.filter(s => (s.changePercent || 0) < 0).length || 0} Losing
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {/* Watchlist Items */}
+          {isLoadingWatchlist ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <WatchlistItemSkeleton key={i} />
+              ))}
+            </div>
+          ) : watchlist && watchlist.length > 0 ? (
+            <div className="space-y-4">
+              {watchlist.map((stock) => (
+                <WatchlistItem 
+                  key={stock.id} 
+                  stock={stock} 
+                  onRemove={() => removeFromWatchlist.mutate(stock.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Eye className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="font-medium text-lg mb-2">Your watchlist is empty</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+                Add stocks to your watchlist to track their performance and get personalized insights.
+              </p>
+              <Button 
+                variant="outline" 
+                className="border-blue-200 text-blue-700"
+                onClick={() => document.querySelector('input')?.focus()}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Stocks to Watchlist
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       
       {/* Add More Button */}
       {watchlist && watchlist.length > 0 && (
         <Button 
           variant="outline" 
-          className="w-full border-dashed"
+          className="w-full border-dashed border-blue-200 text-blue-700"
           onClick={() => document.querySelector('input')?.focus()}
         >
           <Plus className="mr-2 h-4 w-4" />
-          Add More Stock
+          Add More Stocks
         </Button>
       )}
     </div>
