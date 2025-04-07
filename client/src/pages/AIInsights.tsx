@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AiSuggestion, Stock } from "@shared/schema";
-import SimplifiedHeader from "@/components/SimplifiedHeader";
+// import SimplifiedHeader from "@/components/SimplifiedHeader";
 import Navigation from "@/components/Navigation";
 // import MarketTicker from "@/components/MarketTicker"; //Removed MarketTicker import
 import AISuggestions from "@/components/AISuggestions";
@@ -97,8 +97,6 @@ const AIInsights = () => {
 
   return (
     <div className="min-h-screen pb-16 relative bg-white dark:bg-gray-900">
-      <SimplifiedHeader hideAppName={true} />
-
       <main className="container mx-auto px-4 py-4">
         <h2 className="text-xl font-semibold mb-4">AI Insights</h2>
 
