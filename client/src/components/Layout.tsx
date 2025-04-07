@@ -51,7 +51,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
             )}
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <ProfilePanel />
             <ThemeToggle />
           </div>
