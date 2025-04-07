@@ -29,6 +29,112 @@
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
+
+/* Profile Panel Styles */
+.profile-panel {
+  animation: slideInFade 0.2s ease-out forwards;
+}
+
+@keyframes slideInFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.profile-button {
+  @apply flex items-center justify-center rounded-full bg-blue-100 h-10 w-10 text-blue-600 dark:bg-blue-800 dark:text-blue-200 text-sm hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors cursor-pointer overflow-hidden;
+}
+
+.profile-image {
+  @apply h-full w-full object-cover;
+}
+
+.profile-menu {
+  @apply absolute right-0 top-12 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-50 overflow-hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-menu-header {
+  @apply p-4 border-b border-gray-100 dark:border-gray-700;
+}
+
+.profile-menu-user-info {
+  @apply flex items-center gap-3;
+}
+
+.profile-menu-image {
+  @apply h-12 w-12 rounded-full object-cover;
+}
+
+.profile-menu-name {
+  @apply font-semibold text-gray-800 dark:text-gray-200;
+}
+
+.profile-menu-email {
+  @apply text-sm text-gray-500 dark:text-gray-400;
+}
+
+.profile-menu-items {
+  @apply p-2;
+}
+
+.profile-menu-item {
+  @apply flex items-center gap-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full text-left;
+}
+
+.profile-menu-logout {
+  @apply text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20;
+}
+
+/* Settings Modal Toggle Item */
+.setting-item {
+  @apply flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg;
+}
+
+.toggle-item label {
+  @apply flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300;
+}
+
+.switch {
+  @apply relative inline-block w-10 h-6;
+}
+
+.switch input {
+  @apply opacity-0 w-0 h-0;
+}
+
+.slider {
+  @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 dark:bg-gray-600 transition-all rounded-full;
+}
+
+.slider:before {
+  @apply absolute content-[''] h-4 w-4 left-1 bottom-1 bg-white transition-all rounded-full;
+}
+
+input:checked + .slider {
+  @apply bg-primary;
+}
+
+input:checked + .slider:before {
+  transform: translateX(16px);
+}
+
 .profile-panel.visible {
   opacity: 1;
   transform: translateY(0) scale(1);
