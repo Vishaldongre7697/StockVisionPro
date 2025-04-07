@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AiSuggestion, Stock } from "@shared/schema";
 import SimplifiedHeader from "@/components/SimplifiedHeader";
 import Navigation from "@/components/Navigation";
-import MarketTicker from "@/components/MarketTicker";
+// import MarketTicker from "@/components/MarketTicker"; //Removed MarketTicker import
 import AISuggestions from "@/components/AISuggestions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,7 +39,7 @@ const AIInsights = () => {
   // Calculate market sentiment
   const marketSentiment = () => {
     if (!stocks) return 0;
-    
+
     const positiveStocks = stocks.filter(s => (s.changePercent || 0) > 0).length;
     return Math.round((positiveStocks / stocks.length) * 100);
   };
@@ -47,9 +47,9 @@ const AIInsights = () => {
   // Prepare data for sector performance chart
   const sectorData = () => {
     if (!stocks) return [];
-    
+
     const sectors = new Map<string, { count: number, performance: number }>();
-    
+
     stocks.forEach(stock => {
       if (stock.sector && stock.sector !== "Index") {
         const existing = sectors.get(stock.sector) || { count: 0, performance: 0 };
@@ -59,7 +59,7 @@ const AIInsights = () => {
         });
       }
     });
-    
+
     return Array.from(sectors.entries()).map(([name, data]) => ({
       name,
       performance: data.performance / data.count
@@ -69,20 +69,20 @@ const AIInsights = () => {
   // Prepare suggestion distribution data for pie chart
   const suggestionDistribution = () => {
     if (!suggestions) return [];
-    
+
     const counts = {
       BUY: 0,
       SELL: 0,
       HOLD: 0,
       WATCH: 0
     };
-    
+
     suggestions.forEach(suggestion => {
       if (suggestion.suggestion in counts) {
         counts[suggestion.suggestion as keyof typeof counts]++;
       }
     });
-    
+
     return [
       { name: 'BUY', value: counts.BUY },
       { name: 'SELL', value: counts.SELL },
@@ -98,10 +98,10 @@ const AIInsights = () => {
   return (
     <div className="min-h-screen pb-16 relative bg-white dark:bg-gray-900">
       <SimplifiedHeader hideAppName={true} />
-      
+
       <main className="container mx-auto px-4 py-4">
         <h2 className="text-xl font-semibold mb-4">AI Insights</h2>
-        
+
         <Card className="mb-6">
           <CardHeader className="bg-primary px-4 py-3">
             <div className="flex items-center">
@@ -115,7 +115,7 @@ const AIInsights = () => {
             <p className="text-neutral-600 mb-4">
               Our AI has analyzed market patterns, institutional activity, and sector rotation to provide the following insights:
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div className="border rounded-lg p-4">
                 <h4 className="font-medium mb-2">Market Sentiment</h4>
@@ -147,7 +147,7 @@ const AIInsights = () => {
                       : "Neutral market sentiment. Selective opportunities in both directions."}
                 </p>
               </div>
-              
+
               <div className="border rounded-lg p-4">
                 <h4 className="font-medium mb-2">Suggestion Distribution</h4>
                 {isLoading ? (
@@ -178,7 +178,7 @@ const AIInsights = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="border rounded-lg p-4 mb-6">
               <h4 className="font-medium mb-2">Sector Performance</h4>
               {isLoading ? (
@@ -206,7 +206,7 @@ const AIInsights = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-green-50 border-green-200">
                 <CardContent className="p-3">
@@ -223,7 +223,7 @@ const AIInsights = () => {
                   )}
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-red-50 border-red-200">
                 <CardContent className="p-3">
                   <div className="flex items-center mb-2">
@@ -239,7 +239,7 @@ const AIInsights = () => {
                   )}
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-3">
                   <div className="flex items-center mb-2">
@@ -258,18 +258,18 @@ const AIInsights = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Tabs defaultValue="topPicks">
           <TabsList className="mb-4">
             <TabsTrigger value="topPicks">Top Picks</TabsTrigger>
             <TabsTrigger value="marketInsights">Market Insights</TabsTrigger>
             <TabsTrigger value="trendAnalysis">Trend Analysis</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="topPicks">
             <AISuggestions />
           </TabsContent>
-          
+
           <TabsContent value="marketInsights">
             <Card>
               <CardContent className="p-6 text-center">
@@ -282,7 +282,7 @@ const AIInsights = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="trendAnalysis">
             <Card>
               <CardContent className="p-6 text-center">
@@ -297,7 +297,7 @@ const AIInsights = () => {
           </TabsContent>
         </Tabs>
       </main>
-      
+
       <Navigation />
     </div>
   );
