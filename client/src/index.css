@@ -2,6 +2,144 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Profile Panel Styles */
+.profile-panel {
+  position: absolute;
+  top: calc(var(--header-height, 60px) - 5px);
+  right: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  width: 260px;
+  z-index: 110;
+  border: 1px solid rgb(226, 232, 240);
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  transform-origin: top right;
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s step-end;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.dark .profile-panel {
+  background: rgb(24, 24, 27);
+  border-color: rgb(63, 63, 70);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.profile-panel.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  visibility: visible;
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0s;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid rgb(226, 232, 240);
+}
+
+.dark .profile-header {
+  border-color: rgb(63, 63, 70);
+}
+
+.profile-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+
+.profile-user-info h3 {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: rgb(17, 24, 39);
+  margin-bottom: 2px;
+}
+
+.dark .profile-user-info h3 {
+  color: rgb(229, 231, 235);
+}
+
+.profile-user-info p {
+  font-size: 0.85rem;
+  color: rgb(107, 114, 128);
+  line-height: 1.2;
+}
+
+.profile-nav {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgb(226, 232, 240);
+}
+
+.dark .profile-nav {
+  border-color: rgb(63, 63, 70);
+}
+
+.profile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  color: rgb(75, 85, 99);
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  border-radius: 4px;
+  margin: 0 0.5rem;
+  cursor: pointer;
+}
+
+.dark .profile-nav-link {
+  color: rgb(156, 163, 175);
+}
+
+.profile-nav-link:hover {
+  background-color: rgb(243, 244, 246);
+  color: rgb(17, 24, 39);
+}
+
+.dark .profile-nav-link:hover {
+  background-color: rgb(39, 39, 42);
+  color: rgb(229, 231, 235);
+}
+
+.profile-actions {
+  padding: 0.75rem 1rem;
+}
+
+.logout-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  background-color: rgb(254, 242, 242);
+  color: rgb(220, 38, 38);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s;
+  font-size: 0.9rem;
+}
+
+.dark .logout-btn {
+  background-color: rgb(127, 29, 29, 0.2);
+}
+
+.logout-btn:hover {
+  background-color: rgb(254, 226, 226);
+}
+
+.dark .logout-btn:hover {
+  background-color: rgb(127, 29, 29, 0.3);
+}
+
 @layer base {
   * {
     @apply border-border;

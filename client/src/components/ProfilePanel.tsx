@@ -1,131 +1,75 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Link } from 'wouter';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import {
-  User,
-  Settings,
-  Lock,
-  Shield,
-  LogOut,
-  X
+  User, Lock, Shield, Settings2, LogOut, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-interface ProfilePanelProps {
-  isOpen: boolean;
-  onClose: () => void;
-  triggerRef: React.RefObject<HTMLButtonElement>;
-}
-
-export function ProfilePanel({ isOpen, onClose, triggerRef }: ProfilePanelProps) {
+export function ProfilePanel() {
   const { user, logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Handle clicks outside the panel
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        panelRef.current && 
-        !panelRef.current.contains(event.target as Node) &&
-        triggerRef.current && 
-        !triggerRef.current.contains(event.target as Node)
-      ) {
-        onClose();
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
       }
     }
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose, triggerRef]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  // Handle escape key
-  useEffect(() => {
-    function handleEscKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscKey);
-    }
-    
-    return () => {
-      document.removeEventListener('keydown', handleEscKey);
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+  const handleLogout = () => {
+    logout();
+    setIsOpen(false);
+  };
 
   return (
-    <div
-      ref={panelRef}
-      className="profile-panel fixed right-4 top-16 w-72 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-800 z-50 overflow-hidden"
-    >
-      <div className="relative">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="absolute right-2 top-2 h-6 w-6"
-          onClick={onClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+    <>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      >
+        <User className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+      </button>
 
-      <div className="p-4 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800">
-        <Avatar className="h-12 w-12 border-2 border-primary">
-          <AvatarImage src={user?.profileImage} />
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {user?.fullName?.[0] || user?.username?.[0] || 'U'}
-          </AvatarFallback>
-        </Avatar>
-        <div className="space-y-1">
-          <p className="font-medium leading-none">{user?.fullName || user?.username}</p>
-          <p className="text-sm text-muted-foreground">{user?.email}</p>
+      <div ref={panelRef} className={`profile-panel ${isOpen ? 'visible' : ''}`}>
+        <div className="profile-header">
+          <img 
+            src={user?.profileImage || "https://via.placeholder.com/150"} 
+            alt="Profile" 
+            className="profile-avatar"
+          />
+          <div className="profile-user-info">
+            <h3>{user?.fullName || user?.username || 'Guest'}</h3>
+            <p>{user?.email || 'Not signed in'}</p>
+          </div>
+        </div>
+
+        <nav className="profile-nav">
+          <a className="profile-nav-link">
+            <User size={16}/> Edit Profile
+          </a>
+          <a className="profile-nav-link">
+            <Lock size={16}/> Change Password
+          </a>
+          <a className="profile-nav-link">
+            <Shield size={16}/> Privacy Policy
+          </a>
+          <a className="profile-nav-link">
+            <Settings2 size={16}/> App Settings
+          </a>
+        </nav>
+
+        <div className="profile-actions">
+          <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={16}/>
+            <span>Logout</span>
+          </button>
         </div>
       </div>
-
-      <div className="p-2">
-        <nav className="space-y-1">
-          <Link href="/settings">
-            <a className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <Settings className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-              <span>Account Settings</span>
-            </a>
-          </Link>
-          <Link href="/settings">
-            <a className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <Lock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-              <span>Privacy Settings</span>
-            </a>
-          </Link>
-          <Link href="/settings">
-            <a className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <Shield className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-              <span>Privacy Policy</span>
-            </a>
-          </Link>
-        </nav>
-      </div>
-
-      <div className="p-3 border-t border-gray-200 dark:border-gray-800">
-        <Button 
-          variant="destructive" 
-          size="sm" 
-          className="w-full justify-start"
-          onClick={logout}
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          <span>Logout</span>
-        </Button>
-      </div>
-    </div>
+    </>
   );
 }
