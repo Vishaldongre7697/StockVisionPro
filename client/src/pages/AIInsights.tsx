@@ -96,9 +96,8 @@ const AIInsights = () => {
   const isLoading = isLoadingSuggestions || isLoadingStocks;
 
   return (
-    <div className="min-h-screen pb-16 relative">
+    <div className="min-h-screen pb-16 relative bg-white dark:bg-gray-900">
       <SimplifiedHeader hideAppName={true} />
-      <MarketTicker />
       
       <main className="container mx-auto px-4 py-4">
         <h2 className="text-xl font-semibold mb-4">AI Insights</h2>
