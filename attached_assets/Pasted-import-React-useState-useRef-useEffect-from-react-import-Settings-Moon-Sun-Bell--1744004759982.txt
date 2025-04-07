@@ -1,0 +1,220 @@
+import React, { useState, useRef, useEffect } from 'react';
+import {
+    Settings, Moon, Sun, Bell, User, Lock, Shield, Settings2, LogOut,
+    BarChart2, Newspaper, Lightbulb, ListChecks, MessageSquare, Palette, X
+} from 'lucide-react';
+
+// Required Sub-Component for Settings Modal
+function SettingsToggleItem({ id, label, icon: Icon, isChecked, onChange }) {
+    return (
+        <div className="setting-item toggle-item">
+            <label htmlFor={id}>
+                {Icon && <Icon size={16}/>} {label}
+            </label>
+            <label className="switch">
+                <input
+                    type="checkbox"
+                    id={id}
+                    checked={isChecked}
+                    onChange={onChange}
+                />
+                <span className="slider round"></span>
+            </label>
+        </div>
+    );
+}
+
+export default function ProfilePanel() {
+    const [isProfilePanelOpen, setIsProfilePanelOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [theme, setTheme] = useState('light');
+    const [appSettings, setAppSettings] = useState({
+        stockAlerts: true,
+        newsAlerts: true,
+        aiAlerts: false,
+        watchlistAlerts: true,
+        popupAlerts: true,
+    });
+
+    const profilePanelRef = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (profilePanelRef.current && !profilePanelRef.current.contains(event.target)) {
+                setIsProfilePanelOpen(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const showNotification = (message, type) => {
+        // Implement notification logic here
+        console.log(message, type);
+    };
+
+    const handleSettingChange = (setting, value) => {
+        if (setting === 'theme') {
+            setTheme(value);
+            document.body.className = value;
+        } else {
+            setAppSettings(prev => ({
+                ...prev,
+                [setting]: value
+            }));
+        }
+    };
+
+    const handleLogout = () => {
+        showNotification('Logging out...', 'info');
+        // Implement logout logic here
+    };
+
+    const openSettingsModal = () => {
+        setIsSettingsModalOpen(true);
+    };
+
+    const closeSettingsModal = () => {
+        setIsSettingsModalOpen(false);
+    };
+
+    return (
+        <>
+            <button
+                onClick={() => setIsProfilePanelOpen(!isProfilePanelOpen)}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+                <User className="w-6 h-6 text-gray-700" />
+            </button>
+
+            <ProfileAndSettingsPanels
+                profilePanelRef={profilePanelRef}
+                isProfilePanelOpen={isProfilePanelOpen}
+                showNotification={showNotification}
+                setIsProfilePanelOpen={setIsProfilePanelOpen}
+                openSettingsModal={openSettingsModal}
+                handleLogout={handleLogout}
+                isSettingsModalOpen={isSettingsModalOpen}
+                closeSettingsModal={closeSettingsModal}
+                appSettings={appSettings}
+                handleSettingChange={handleSettingChange}
+                theme={theme}
+            />
+        </>
+    );
+}
+
+function ProfileAndSettingsPanels({
+    profilePanelRef,
+    isProfilePanelOpen,
+    showNotification,
+    setIsProfilePanelOpen,
+    openSettingsModal,
+    handleLogout,
+    isSettingsModalOpen,
+    closeSettingsModal,
+    appSettings,
+    handleSettingChange,
+    theme
+}) {
+    return (
+        <>
+            {/* Profile Panel */}
+            <div ref={profilePanelRef} className={`profile-panel ${isProfilePanelOpen ? 'visible' : ''}`}>
+                <div className="profile-header">
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&q=80" alt="Profile Avatar Large" className="profile-avatar"/>
+                    <div className="profile-user-info">
+                        <h3>John Doe</h3>
+                        <p>john.doe@example.com</p>
+                    </div>
+                </div>
+                <nav className="profile-nav">
+                    <a className="profile-nav-link" onClick={() => {showNotification('Edit Profile clicked', 'info'); setIsProfilePanelOpen(false);}}>
+                        <User size={16}/> Edit Profile
+                    </a>
+                    <a className="profile-nav-link" onClick={() => {showNotification('Change Password clicked', 'info'); setIsProfilePanelOpen(false);}}>
+                        <Lock size={16}/> Change Password
+                    </a>
+                    <a className="profile-nav-link" onClick={() => {showNotification('View Privacy clicked', 'info'); setIsProfilePanelOpen(false);}}>
+                        <Shield size={16}/> Privacy Policy
+                    </a>
+                    <a className="profile-nav-link" onClick={() => { openSettingsModal(); setIsProfilePanelOpen(false); }}>
+                        <Settings2 size={16}/> App Settings
+                    </a>
+                </nav>
+                <div className="profile-actions">
+                    <button className="logout-btn" onClick={handleLogout}>
+                        <LogOut size={16}/>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Settings Modal */}
+            <div className={`modal settings-modal ${isSettingsModalOpen ? 'visible' : ''}`}>
+                <div className="modal-overlay" onClick={closeSettingsModal}></div>
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h2><Settings size={20}/> Settings</h2>
+                        <button className="modal-close-btn" aria-label="Close settings" onClick={closeSettingsModal}>
+                            <X size={20}/>
+                        </button>
+                    </div>
+                    <div className="settings-sections">
+                        {/* Profile Settings Section */}
+                        <div className="settings-section">
+                            <h3><User size={18}/> Profile</h3>
+                            <div className="setting-item">
+                                <label>Edit Profile Info</label>
+                                <button className="btn btn-secondary btn-sm" onClick={() => showNotification('Edit Profile clicked', 'info')}>Edit</button>
+                            </div>
+                            <div className="setting-item">
+                                <label>Change Password</label>
+                                <button className="btn btn-secondary btn-sm" onClick={() => showNotification('Change Password clicked', 'info')}>Change</button>
+                            </div>
+                            <div className="setting-item">
+                                <label>Privacy Policy</label>
+                                <button className="btn btn-link btn-sm" onClick={() => showNotification('View Privacy clicked', 'info')}>View</button>
+                            </div>
+                        </div>
+
+                        {/* Notifications Settings Section */}
+                        <div className="settings-section">
+                            <h3><Bell size={18}/> Notifications</h3>
+                            <SettingsToggleItem id="toggleStockAlerts" label="Stock Price Alerts" icon={BarChart2} isChecked={appSettings.stockAlerts} onChange={(e) => handleSettingChange('stockAlerts', e.target.checked)} />
+                            <SettingsToggleItem id="toggleNewsAlerts" label="Market News" icon={Newspaper} isChecked={appSettings.newsAlerts} onChange={(e) => handleSettingChange('newsAlerts', e.target.checked)} />
+                            <SettingsToggleItem id="toggleAiAlerts" label="AI Suggestions" icon={Lightbulb} isChecked={appSettings.aiAlerts} onChange={(e) => handleSettingChange('aiAlerts', e.target.checked)} />
+                            <SettingsToggleItem id="toggleWatchlistAlerts" label="Watchlist Updates" icon={ListChecks} isChecked={appSettings.watchlistAlerts} onChange={(e) => handleSettingChange('watchlistAlerts', e.target.checked)} />
+                            <SettingsToggleItem id="togglePopupAlerts" label="In-App Popups" icon={MessageSquare} isChecked={appSettings.popupAlerts} onChange={(e) => handleSettingChange('popupAlerts', e.target.checked)} />
+                        </div>
+
+                        {/* Appearance Settings Section */}
+                        <div className="settings-section">
+                            <h3><Palette size={18}/> Appearance</h3>
+                            <div className="setting-item">
+                                <label>Theme</label>
+                                <div className="theme-selector">
+                                    <button
+                                        className={`btn btn-sm theme-option ${theme === 'light' ? 'active' : ''}`}
+                                        onClick={() => handleSettingChange('theme', 'light')}
+                                        data-theme="light"
+                                    >
+                                        <Sun size={14}/> Light
+                                    </button>
+                                    <button
+                                        className={`btn btn-sm theme-option ${theme === 'dark' ? 'active' : ''}`}
+                                        onClick={() => handleSettingChange('theme', 'dark')}
+                                        data-theme="dark"
+                                    >
+                                        <Moon size={14}/> Dark
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}
