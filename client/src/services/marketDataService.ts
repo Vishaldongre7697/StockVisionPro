@@ -70,7 +70,7 @@ export const getTopStocks = async (category: 'active' | 'gainers' | 'losers' = '
       stocks = response.data.top_losers;
     }
     
-    return stocks.slice(0, limit).map(stock => ({
+    return stocks.slice(0, limit).map((stock: any) => ({
       symbol: stock.ticker,
       name: stock.name,
       price: parseFloat(stock.price),
