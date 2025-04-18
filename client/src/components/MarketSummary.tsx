@@ -1,13 +1,12 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMarketSummary } from '@/hooks/useMarketData';
-import { ArrowUpRight, ArrowDownRight, RefreshCcw, TrendingUp, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Link } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
+import { getMarketSummary } from '@/services/marketDataService';
 
 export interface MarketSummaryProps {
   showRefreshButton?: boolean;
@@ -15,218 +14,200 @@ export interface MarketSummaryProps {
   className?: string;
 }
 
+interface MarketIndex {
+  name: string;
+  symbol: string;
+  value: number;
+  change: number;
+  changePercent: number;
+}
+
 /**
  * Market Summary Component that displays key market indices with live data
  */
-const MarketSummary = ({
-  showRefreshButton = true,
+export default function MarketSummary({
+  showRefreshButton = false,
   compactView = false,
-  className,
-}: MarketSummaryProps) => {
-  const { data, loading, error, refresh, lastUpdated } = useMarketSummary({
-    autoRefresh: true,
-    refreshInterval: 60000, // 1 minute
-  });
-  const { toast } = useToast();
-
-  const handleRefresh = () => {
-    refresh();
-    toast({
-      title: 'Refreshing market data',
-      description: 'Fetching the latest market information.',
-    });
-  };
-
-  const handleRequestApiKey = () => {
-    toast({
-      title: 'API Key Required',
-      description: 'A stock market API key is needed for live market data.',
-      variant: 'destructive',
-    });
-  };
-
-  const formatDate = () => {
-    return new Date().toLocaleDateString('en-US', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  // If loading, show skeleton UI
-  if (loading && !data) {
-    return (
-      <Card className={cn("bg-white border border-gray-100 shadow-sm", className)}>
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-5 w-32" />
-          </div>
-          <Skeleton className="h-4 w-full mt-2" />
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="bg-white border border-gray-100 shadow-sm">
-                <CardContent className="p-4">
-                  <Skeleton className="h-5 w-20 mb-2" />
-                  <Skeleton className="h-7 w-24 mb-1" />
-                  <Skeleton className="h-4 w-16" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // If there's an error, show error state
-  if (error) {
-    return (
-      <Card className={cn("bg-white border border-destructive shadow-sm", className)}>
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-lg font-bold">Market Summary</CardTitle>
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              {formatDate()}
-            </Badge>
-          </div>
-          <CardDescription className="text-destructive">
-            {error.includes('API key') ? (
-              <>
-                Market data requires an API key. 
-                <Button
-                  variant="link"
-                  className="h-auto p-0 text-primary"
-                  onClick={handleRequestApiKey}
-                >
-                  Request API Key
-                </Button>
-              </>
-            ) : (
-              'Failed to load market data. Please try again later.'
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center">
-          <Button
-            variant="outline"
-            className="mt-2"
-            onClick={handleRefresh}
-          >
-            <RefreshCcw className="mr-2 h-4 w-4" />
-            Try Again
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Generate market summary text
-  const generateSummaryText = () => {
-    if (!data || data.length === 0) return 'Market data unavailable';
-    
-    // Count how many indices are up/down
-    const upCount = data.filter(index => index.changePercent > 0).length;
-    const trend = upCount > data.length / 2 ? 'positive' : 'negative';
-    
-    // Find the best and worst performing indices
-    const sortedIndices = [...data].sort((a, b) => b.changePercent - a.changePercent);
-    const bestPerformer = sortedIndices[0];
-    const worstPerformer = sortedIndices[sortedIndices.length - 1];
-    
-    if (trend === 'positive') {
-      return `Markets are ${upCount === data.length ? 'all' : 'mostly'} trending up today, with ${bestPerformer.name} leading at +${bestPerformer.changePercent.toFixed(2)}%. ${worstPerformer.changePercent < 0 ? `${worstPerformer.name} is down ${Math.abs(worstPerformer.changePercent).toFixed(2)}%.` : ''}`;
-    } else {
-      return `Markets are ${upCount === 0 ? 'all' : 'mostly'} trending down today, with ${worstPerformer.name} down ${Math.abs(worstPerformer.changePercent).toFixed(2)}%. ${bestPerformer.changePercent > 0 ? `${bestPerformer.name} is up ${bestPerformer.changePercent.toFixed(2)}%.` : ''}`;
+  className
+}: MarketSummaryProps) {
+  const [indices, setIndices] = useState<MarketIndex[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  
+  // Fetch market summary data
+  const fetchMarketData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const data = await getMarketSummary();
+      
+      // Transform API data to match our MarketIndex interface
+      const transformedData: MarketIndex[] = data.map((item: any) => ({
+        name: item.name,
+        symbol: item.symbol,
+        value: item.price || 0,
+        change: item.change || 0,
+        changePercent: item.changePercent || 0
+      }));
+      
+      setIndices(transformedData);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error('Error fetching market summary:', err);
+      setError('Could not load market data');
+      
+      // Set fallback data
+      setIndices([
+        { name: 'S&P 500', symbol: 'SPY', value: 5123.45, change: 27.82, changePercent: 0.54 },
+        { name: 'Dow Jones', symbol: 'DIA', value: 38765.35, change: 135.68, changePercent: 0.35 },
+        { name: 'NASDAQ', symbol: 'QQQ', value: 17982.60, change: 78.54, changePercent: 0.44 },
+        { name: 'Russell 2000', symbol: 'IWM', value: 2009.25, change: -12.38, changePercent: -0.61 }
+      ]);
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
+  
+  // Initial data fetch
+  useEffect(() => {
+    fetchMarketData();
+    
+    // Optional: Set up automatic refresh (every 30 seconds)
+    const intervalId = setInterval(() => {
+      fetchMarketData();
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(intervalId);
+  }, [fetchMarketData]);
+  
+  // Format time for last updated
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
-
-  // Render market data
+  
   return (
-    <Card className={cn("bg-white border border-gray-100 shadow-sm", className)}>
-      <CardHeader className="pb-2">
+    <Card className={cn("overflow-hidden", className)}>
+      <CardHeader className={cn("pb-2", compactView && "py-2")}>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-bold">Market Summary</CardTitle>
+          <CardTitle className={cn("font-bold", compactView ? "text-base" : "text-lg")}>
+            Market Summary
+          </CardTitle>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              {formatDate()}
-            </Badge>
             {showRefreshButton && (
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleRefresh}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8" 
+                onClick={fetchMarketData}
+                disabled={isLoading}
               >
-                <RefreshCcw className="h-4 w-4" />
+                <RefreshCw className={cn(
+                  "h-4 w-4",
+                  isLoading && "animate-spin"
+                )} />
               </Button>
             )}
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: compactView ? undefined : 'short', 
+                day: 'numeric', 
+                month: compactView ? 'numeric' : 'short',
+                year: compactView ? undefined : 'numeric' 
+              })}
+            </Badge>
           </div>
         </div>
-        <CardDescription className="text-sm">
-          {generateSummaryText()}
-        </CardDescription>
+        {!compactView && (
+          <CardDescription className="text-sm mt-1">
+            Last updated: {formatTime(lastUpdated)}
+          </CardDescription>
+        )}
       </CardHeader>
       
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {data?.map((index) => (
-            <Card key={index.symbol} className="bg-white border border-gray-100 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex flex-col">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">{index.name}</span>
-                    <div className={cn(
-                      "text-xs font-medium px-2 py-1 rounded-full",
-                      index.changePercent > 0 
-                        ? "bg-green-50 text-green-700" 
-                        : "bg-red-50 text-red-700"
-                    )}>
-                      {index.changePercent > 0 ? (
-                        <span className="flex items-center">
-                          <ArrowUpRight className="mr-1 h-3 w-3" />
-                          {index.changePercent.toFixed(2)}%
-                        </span>
-                      ) : (
-                        <span className="flex items-center">
-                          <ArrowDownRight className="mr-1 h-3 w-3" />
-                          {Math.abs(index.changePercent).toFixed(2)}%
-                        </span>
-                      )}
+        {error && (
+          <div className="rounded-md bg-amber-50 p-3 mb-3 flex items-center gap-2 text-amber-800">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+        
+        <div className={cn(
+          "grid gap-3", 
+          compactView ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4"
+        )}>
+          {isLoading ? (
+            // Loading skeletons
+            Array(4).fill(0).map((_, i) => (
+              <Card key={i} className="bg-white border border-gray-100">
+                <CardContent className={cn("p-3", compactView && "p-2")}>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-5 w-14 rounded-full" />
                     </div>
+                    <Skeleton className="h-6 w-24" />
+                    <Skeleton className="h-3 w-12" />
                   </div>
-                  <span className="text-xl font-bold">
-                    ${index.price.toLocaleString('en-US', { 
-                      maximumFractionDigits: 2,
-                      minimumFractionDigits: 2
-                    })}
-                  </span>
-                  <span className={cn(
-                    "text-xs mt-1",
-                    index.changePercent > 0 ? "text-green-600" : "text-red-600"
-                  )}>
-                    {(index.changePercent > 0 ? '+' : '') + index.change.toFixed(2)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            // Actual data
+            indices.map((index) => (
+              <Card key={index.symbol} className="bg-white border border-gray-100">
+                <CardContent className={cn("p-3", compactView && "p-2")}>
+                  <div className="flex flex-col">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className={cn(
+                        "font-medium", 
+                        compactView ? "text-xs" : "text-sm"
+                      )}>
+                        {index.name}
+                      </span>
+                      <div className={cn(
+                        "text-xs font-medium px-2 py-0.5 rounded-full",
+                        index.changePercent > 0 
+                          ? "bg-green-50 text-green-700" 
+                          : "bg-red-50 text-red-700"
+                      )}>
+                        {index.changePercent > 0 ? (
+                          <span className="flex items-center">
+                            <ArrowUpRight className="mr-1 h-3 w-3" />
+                            {index.changePercent.toFixed(2)}%
+                          </span>
+                        ) : (
+                          <span className="flex items-center">
+                            <ArrowDownRight className="mr-1 h-3 w-3" />
+                            {Math.abs(index.changePercent).toFixed(2)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={cn(
+                      "font-bold", 
+                      compactView ? "text-base" : "text-xl"
+                    )}>
+                      {index.value.toLocaleString('en-US', { 
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 2
+                      })}
+                    </span>
+                    <span className={cn(
+                      "text-xs mt-1",
+                      index.changePercent > 0 ? "text-green-600" : "text-red-600"
+                    )}>
+                      {(index.changePercent > 0 ? '+' : '') + index.change.toFixed(2)}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </CardContent>
-      
-      {!compactView && (
-        <CardFooter className="pt-0">
-          <Link href="/market" className="text-primary text-sm flex items-center ml-auto">
-            View detailed market data
-            <ExternalLink className="ml-1 h-3 w-3" />
-          </Link>
-        </CardFooter>
-      )}
     </Card>
   );
-};
-
-export default MarketSummary;
+}

@@ -1,4 +1,4 @@
-import { Search, TrendingUp, ArrowUpRight, ArrowDownRight, BarChart3, AreaChart, DollarSign, PieChart, BarChart4, LineChart, Activity, TrendingDown } from 'lucide-react';
+import { Search, TrendingUp, ArrowUpRight, ArrowDownRight, BarChart3, AreaChart, DollarSign, PieChart, BarChart4, LineChart, Activity, TrendingDown, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,8 @@ import { getQueryFn } from '@/lib/queryClient';
 import { Stock } from '@shared/schema';
 import { cn } from '@/lib/utils';
 import Header from '@/components/Header';
+import MarketSummary from '@/components/MarketSummary';
+import { useToast } from '@/hooks/use-toast';
 
 const Home = () => {
   const { user } = useAuth();
@@ -37,6 +39,8 @@ const Home = () => {
       { name: "NIFTYIT", value: 35980.60, change: -125.40, changePercent: -0.35 }
     ]
   };
+  
+  const { toast } = useToast();
 
   // Top buying stocks with quantity data
   const topBuyingStocks = [
@@ -131,6 +135,37 @@ const Home = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* API Key Notice */}
+      {!import.meta.env.VITE_STOCK_API_KEY && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-medium text-amber-800 mb-1">
+                Stock API Key Required
+              </h3>
+              <p className="text-sm text-amber-700 mb-2">
+                To enable live market data, a stock market API key is required.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100"
+                onClick={() => {
+                  toast({
+                    title: 'API Key Required',
+                    description: 'Please contact the administrator to set up the Stock API key for live market data.',
+                    variant: 'destructive',
+                  });
+                }}
+              >
+                Request API Key
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       {/* Trending Stocks Section */}
       <div className="space-y-4">
