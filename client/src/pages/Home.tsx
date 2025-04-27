@@ -62,7 +62,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="space-y-6 bg-white">
+    <div className="space-y-6 bg-background">
       {/* Main content with Search */}
       <div className="flex justify-between items-center mt-4">
         <h1 className="text-2xl font-bold">Market Overview</h1>
@@ -76,7 +76,7 @@ const Home = () => {
       </div>
       
       {/* Market Summary */}
-      <Card className="bg-white border border-gray-100 shadow-sm">
+      <Card className="bg-card border border-border shadow-sm">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-center">
             <CardTitle className="text-lg font-bold">Market Summary</CardTitle>
@@ -92,7 +92,7 @@ const Home = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {marketSummary.indices.map((index) => (
-              <Card key={index.name} className="bg-white border border-gray-100 shadow-sm">
+              <Card key={index.name} className="bg-card border border-border shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex flex-col">
                     <div className="flex justify-between items-center mb-2">
@@ -182,7 +182,7 @@ const Home = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {trendingStocks.map((stock) => (
-            <Card key={stock.id} className="bg-white border border-gray-100 shadow-sm hover:shadow transition-all duration-200">
+            <Card key={stock.id} className="bg-card border border-border shadow-sm hover:shadow transition-all duration-200">
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
@@ -238,7 +238,7 @@ const Home = () => {
       </div>
       
       {/* Top Buying Stocks - With Quantity Section */}
-      <Card className="bg-white border border-gray-100 shadow-sm">
+      <Card className="bg-card border border-border shadow-sm">
         <CardHeader className="pb-2 border-none">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -257,7 +257,7 @@ const Home = () => {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {topBuyingStocks.map((stock) => (
-              <div key={stock.id} className="p-4 rounded-lg border border-gray-100 shadow-sm">
+              <div key={stock.id} className="p-4 rounded-lg border border-border bg-card shadow-sm">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex flex-col">
                     <span className="font-medium">{stock.symbol}</span>
