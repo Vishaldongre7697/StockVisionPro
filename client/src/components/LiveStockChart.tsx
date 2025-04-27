@@ -150,10 +150,10 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-2 border border-gray-200 shadow-sm rounded-md text-xs">
+        <div className="bg-card p-2 border border-border shadow-sm rounded-md text-xs">
           <p className="font-medium">{payload[0].payload.formattedDate}</p>
           <p className="text-primary">Price: ${payload[0].value.toFixed(2)}</p>
-          <div className="text-gray-500 whitespace-pre-line text-[10px] mt-1">
+          <div className="text-muted-foreground whitespace-pre-line text-[10px] mt-1">
             {payload[0].payload.tooltip}
           </div>
         </div>
@@ -267,7 +267,7 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
   const renderLoadingState = () => (
     <div className="flex flex-col space-y-3 p-4 h-[350px] items-center justify-center">
       <RefreshCw className="h-8 w-8 text-blue-500 animate-spin" />
-      <p className="text-sm text-gray-500">Loading chart data...</p>
+      <p className="text-sm text-muted-foreground">Loading chart data...</p>
     </div>
   );
   
@@ -276,7 +276,7 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
     <div className="flex flex-col items-center justify-center h-[350px] p-4">
       <AlertTriangle className="h-10 w-10 text-amber-500 mb-2" />
       <h3 className="text-base font-medium mb-1">Failed to load chart</h3>
-      <p className="text-sm text-gray-500 mb-3 text-center">{error}</p>
+      <p className="text-sm text-muted-foreground mb-3 text-center">{error}</p>
       <Button variant="outline" size="sm" onClick={fetchStockData}>
         <RefreshCw className="h-4 w-4 mr-2" />
         Try Again
@@ -322,7 +322,7 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 hidden sm:inline-block">
+            <span className="text-xs text-muted-foreground hidden sm:inline-block">
               Updated: {formatTime(lastUpdated)}
             </span>
             <Button 
@@ -344,7 +344,7 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
       {showControls && (
         <div className="px-4 pb-1 pt-0 flex flex-wrap justify-between gap-2">
           <div className="flex items-center">
-            <span className="text-xs text-gray-500 mr-2">Timeframe:</span>
+            <span className="text-xs text-muted-foreground mr-2">Timeframe:</span>
             <ToggleGroup 
               type="single" 
               defaultValue={timeframe}
@@ -371,7 +371,7 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
           </div>
           
           <div className="flex items-center">
-            <span className="text-xs text-gray-500 mr-2">Chart:</span>
+            <span className="text-xs text-muted-foreground mr-2">Chart:</span>
             <ToggleGroup 
               type="single" 
               defaultValue={chartType}
@@ -397,7 +397,7 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
           
           {timeframe === 'intraday' && (
             <div className="flex items-center">
-              <span className="text-xs text-gray-500 mr-2">Interval:</span>
+              <span className="text-xs text-muted-foreground mr-2">Interval:</span>
               <ToggleGroup 
                 type="single" 
                 defaultValue={intradayInterval}
@@ -424,7 +424,7 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
           renderErrorState()
         ) : chartData.length === 0 ? (
           <div className="flex items-center justify-center h-[350px]">
-            <p className="text-gray-500">No data available</p>
+            <p className="text-muted-foreground">No data available</p>
           </div>
         ) : (
           renderChart()
