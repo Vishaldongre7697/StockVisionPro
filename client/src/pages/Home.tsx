@@ -321,7 +321,7 @@ const Home = () => {
               </div>
               <h3 className="font-medium">Advancing</h3>
               <p className="text-3xl font-bold mt-2">1,854</p>
-              <p className="text-xs text-gray-500 mt-1">Total Advancing Stocks</p>
+              <p className="text-xs text-muted-foreground mt-1">Total Advancing Stocks</p>
             </div>
           </CardContent>
         </Card>
@@ -334,7 +334,7 @@ const Home = () => {
               </div>
               <h3 className="font-medium">Declining</h3>
               <p className="text-3xl font-bold mt-2">1,278</p>
-              <p className="text-xs text-gray-500 mt-1">Total Declining Stocks</p>
+              <p className="text-xs text-muted-foreground mt-1">Total Declining Stocks</p>
             </div>
           </CardContent>
         </Card>
@@ -347,7 +347,7 @@ const Home = () => {
               </div>
               <h3 className="font-medium">Total Volume</h3>
               <p className="text-3xl font-bold mt-2">7.8B</p>
-              <p className="text-xs text-gray-500 mt-1">Market Volume (shares)</p>
+              <p className="text-xs text-muted-foreground mt-1">Market Volume (shares)</p>
             </div>
           </CardContent>
         </Card>
