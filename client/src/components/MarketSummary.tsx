@@ -56,15 +56,10 @@ export default function MarketSummary({
       setLastUpdated(new Date());
     } catch (err) {
       console.error('Error fetching market summary:', err);
-      setError('Could not load market data');
+      setError('Could not load market data. Please check your API key settings and try again.');
       
-      // Set fallback data
-      setIndices([
-        { name: 'S&P 500', symbol: 'SPY', value: 5123.45, change: 27.82, changePercent: 0.54 },
-        { name: 'Dow Jones', symbol: 'DIA', value: 38765.35, change: 135.68, changePercent: 0.35 },
-        { name: 'NASDAQ', symbol: 'QQQ', value: 17982.60, change: 78.54, changePercent: 0.44 },
-        { name: 'Russell 2000', symbol: 'IWM', value: 2009.25, change: -12.38, changePercent: -0.61 }
-      ]);
+      // Clear indices instead of using fallback data
+      setIndices([]);
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +104,7 @@ export default function MarketSummary({
                 )} />
               </Button>
             )}
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
               {new Date().toLocaleDateString('en-US', { 
                 weekday: compactView ? undefined : 'short', 
                 day: 'numeric', 
@@ -128,7 +123,7 @@ export default function MarketSummary({
       
       <CardContent>
         {error && (
-          <div className="rounded-md bg-amber-50 p-3 mb-3 flex items-center gap-2 text-amber-800">
+          <div className="rounded-md bg-amber-500/10 p-3 mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-400">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <p className="text-sm">{error}</p>
           </div>
@@ -141,7 +136,7 @@ export default function MarketSummary({
           {isLoading ? (
             // Loading skeletons
             Array(4).fill(0).map((_, i) => (
-              <Card key={i} className="bg-white border border-gray-100">
+              <Card key={i} className="bg-card border-border">
                 <CardContent className={cn("p-3", compactView && "p-2")}>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
@@ -157,7 +152,7 @@ export default function MarketSummary({
           ) : (
             // Actual data
             indices.map((index) => (
-              <Card key={index.symbol} className="bg-white border border-gray-100">
+              <Card key={index.symbol} className="bg-card border-border">
                 <CardContent className={cn("p-3", compactView && "p-2")}>
                   <div className="flex flex-col">
                     <div className="flex justify-between items-center mb-1">
@@ -170,8 +165,8 @@ export default function MarketSummary({
                       <div className={cn(
                         "text-xs font-medium px-2 py-0.5 rounded-full",
                         index.changePercent > 0 
-                          ? "bg-green-50 text-green-700" 
-                          : "bg-red-50 text-red-700"
+                          ? "bg-green-500/10 text-green-600 dark:text-green-400" 
+                          : "bg-red-500/10 text-red-600 dark:text-red-400"
                       )}>
                         {index.changePercent > 0 ? (
                           <span className="flex items-center">
@@ -197,7 +192,7 @@ export default function MarketSummary({
                     </span>
                     <span className={cn(
                       "text-xs mt-1",
-                      index.changePercent > 0 ? "text-green-600" : "text-red-600"
+                      index.changePercent > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                     )}>
                       {(index.changePercent > 0 ? '+' : '') + index.change.toFixed(2)}
                     </span>

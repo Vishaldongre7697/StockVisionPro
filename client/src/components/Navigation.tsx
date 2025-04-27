@@ -16,20 +16,22 @@ const Navigation = () => {
   return (
     <>
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-10">
+      <nav className="fixed bottom-0 left-0 right-0 bg-background shadow-lg border-t border-border z-10">
         <div className="flex justify-around">
           {navItems.map((item) => {
             const isActive = location === item.href;
             return (
-              <Link key={item.href} href={item.href}>
-                <a className={cn(
-                  "flex flex-col items-center py-2 flex-1", 
-                  isActive ? "text-primary" : "text-neutral-500"
-                )}>
-                  <item.icon className="h-6 w-6" />
-                  <span className="text-xs mt-1">{item.label}</span>
-                </a>
-              </Link>
+              <div key={item.href} className="flex-1">
+                <Link href={item.href}>
+                  <div className={cn(
+                    "flex flex-col items-center py-2 cursor-pointer", 
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    <item.icon className="h-6 w-6" />
+                    <span className="text-xs mt-1">{item.label}</span>
+                  </div>
+                </Link>
+              </div>
             );
           })}
         </div>
