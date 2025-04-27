@@ -261,7 +261,7 @@ const Home = () => {
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex flex-col">
                     <span className="font-medium">{stock.symbol}</span>
-                    <span className="text-xs text-gray-500">{stock.name}</span>
+                    <span className="text-xs text-muted-foreground">{stock.name}</span>
                   </div>
                   <div className="text-right">
                     <span className="font-bold">₹{stock.currentPrice.toFixed(2)}</span>
@@ -271,20 +271,20 @@ const Home = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-2 mt-3 border-t border-gray-50 pt-2">
+                <div className="space-y-2 mt-3 border-t border-border pt-2">
                   <div className="flex justify-between items-center text-xs">
                     <div>
-                      <span className="text-gray-500">Buy Quantity:</span>
+                      <span className="text-muted-foreground">Buy Quantity:</span>
                       <span className="ml-1 font-medium">{(stock.buyQuantity / 1000000).toFixed(2)}M</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Volume:</span>
+                      <span className="text-muted-foreground">Volume:</span>
                       <span className="ml-1 font-medium">{(stock.volume / 1000000).toFixed(2)}M</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <div>
-                      <span className="text-gray-500">Buy Ratio:</span>
+                      <span className="text-muted-foreground">Buy Ratio:</span>
                       <span className="ml-1 font-medium">{((stock.buyQuantity / stock.volume) * 100).toFixed(1)}%</span>
                     </div>
                     <span className={stock.changePercent > 0 ? "text-blue-600 font-medium" : "text-orange-600 font-medium"}>
@@ -300,23 +300,23 @@ const Home = () => {
       
       {/* Market Overview Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-white border border-gray-100 shadow-sm">
+        <Card className="bg-card border border-border shadow-sm">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
-              <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center mb-3">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                 <Activity className="h-6 w-6 text-blue-600" />
               </div>
               <h3 className="font-medium">Market Breadth</h3>
               <p className="text-3xl font-bold mt-2 text-green-600">1.45</p>
-              <p className="text-xs text-gray-500 mt-1">Advance/Decline Ratio</p>
+              <p className="text-xs text-muted-foreground mt-1">Advance/Decline Ratio</p>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white border border-gray-100 shadow-sm">
+        <Card className="bg-card border border-border shadow-sm">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
-              <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
+              <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center mb-3">
                 <TrendingUp className="h-6 w-6 text-green-600" />
               </div>
               <h3 className="font-medium">Advancing</h3>
@@ -326,10 +326,10 @@ const Home = () => {
           </CardContent>
         </Card>
         
-        <Card className="bg-white border border-gray-100 shadow-sm">
+        <Card className="bg-card border border-border shadow-sm">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
-              <div className="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
+              <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
                 <TrendingDown className="h-6 w-6 text-red-600" />
               </div>
               <h3 className="font-medium">Declining</h3>
@@ -339,10 +339,10 @@ const Home = () => {
           </CardContent>
         </Card>
         
-        <Card className="bg-white border border-gray-100 shadow-sm">
+        <Card className="bg-card border border-border shadow-sm">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
-              <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center mb-3">
+              <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center mb-3">
                 <DollarSign className="h-6 w-6 text-amber-600" />
               </div>
               <h3 className="font-medium">Total Volume</h3>
