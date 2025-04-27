@@ -107,15 +107,21 @@ const EnhancedSuhuAI = ({
 
   // Format message text with line breaks and links
   const formatMessageText = (text: string) => {
-    // Replace line breaks with <br> tags
-    const withLineBreaks = text.split('\n').map((line, i) => (
-      <React.Fragment key={i}>
-        {line}
-        {i < text.split('\n').length - 1 && <br />}
-      </React.Fragment>
-    ));
+    // Create an array of text elements with <br> tags between lines
+    const lines = text.split('\n');
     
-    return <div>{withLineBreaks}</div>;
+    // Create elements manually instead of using React.Fragment
+    return (
+      <div>
+        {lines.map((line, i) => (
+          // Use a <span> instead of React.Fragment to avoid issues
+          <span key={i}>
+            {line}
+            {i < lines.length - 1 && <br />}
+          </span>
+        ))}
+      </div>
+    );
   };
 
   return (

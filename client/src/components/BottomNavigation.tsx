@@ -16,12 +16,14 @@ export function BottomNavigation() {
   return (
     <nav className="bottom-nav">
       {navItems.map((item) => (
-        <Link key={item.path} href={item.path}>
-          <a className={`bottom-nav-item ${location === item.path ? 'active' : ''}`}>
-            <item.icon className="h-5 w-5 mb-1" />
-            <span className="text-xs">{item.label}</span>
-          </a>
-        </Link>
+        <div key={item.path} className="bottom-nav-link-wrapper">
+          <Link href={item.path}>
+            <div className={`bottom-nav-item ${location === item.path ? 'active' : ''}`}>
+              <item.icon className="h-5 w-5 mb-1" />
+              <span className="text-xs">{item.label}</span>
+            </div>
+          </Link>
+        </div>
       ))}
     </nav>
   );
@@ -30,9 +32,9 @@ export function BottomNavigation() {
 export function FloatingSuhuButton() {
   return (
     <Link href="/suhu-ai">
-      <a className="floating-suhu-btn">
+      <div className="floating-suhu-btn">
         <MessageCircle className="h-6 w-6" />
-      </a>
+      </div>
     </Link>
   );
 }
