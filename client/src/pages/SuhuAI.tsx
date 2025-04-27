@@ -24,21 +24,21 @@ const SuhuAI = () => {
     <div className="flex flex-col h-[calc(100vh-8rem)] space-y-4">
       {/* Info banner about API key */}
       {!hasGeminiApiKey && (
-        <Card className="border-amber-200 bg-amber-50">
+        <Card className="border-amber-200 bg-amber-500/10 dark:bg-amber-950/20 dark:border-amber-800">
           <CardContent className="p-4 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-medium text-amber-800 mb-1">
+              <h3 className="font-medium text-amber-800 dark:text-amber-400 mb-1">
                 Gemini API Key Required
               </h3>
-              <p className="text-sm text-amber-700 mb-2">
+              <p className="text-sm text-amber-700 dark:text-amber-500 mb-2">
                 Suhu AI uses Google's Gemini AI model for intelligent responses. To enable this feature, 
                 a Gemini API key is required.
               </p>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100"
+                className="bg-white dark:bg-amber-950 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50"
                 onClick={handleRequestApiKey}
               >
                 Request API Key

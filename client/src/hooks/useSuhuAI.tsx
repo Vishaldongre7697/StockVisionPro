@@ -108,11 +108,19 @@ export const useChat = (
         variant: 'destructive'
       });
       
-      // Add error message
+      // Add error message with specific API key information if needed
+      let errorText = 'I apologize, but I encountered an issue processing your request.';
+      
+      // Check if error is related to API key
+      if (error instanceof Error && 
+          (error.message.includes('API key') || error.message.includes('key missing'))) {
+        errorText = 'I need a Gemini API key to provide intelligent responses. Please contact the administrator to set up the API key.';
+      }
+      
       const errorMessage = {
         id: Date.now().toString(),
         sender: 'ai' as const,
-        text: 'I apologize, but I encountered an issue processing your request. Please try again later.',
+        text: errorText,
         timestamp: new Date()
       };
       
@@ -159,13 +167,24 @@ export const useStockAnalysis = (): UseStockAnalysisReturn => {
       const result = await getStockAnalysis(symbol, stockData);
       setAnalysis(result);
     } catch (err: any) {
-      setError('Failed to generate AI analysis');
       console.error(err);
-      toast({
-        title: 'Analysis Error',
-        description: 'Could not generate AI analysis for this stock.',
-        variant: 'destructive'
-      });
+      
+      // Provide more specific error messages
+      if (err.message && (err.message.includes('API key') || err.message.includes('key missing'))) {
+        setError('Gemini API key required for AI analysis');
+        toast({
+          title: 'API Key Required',
+          description: 'Gemini API key is needed to analyze stocks. Please contact the administrator.',
+          variant: 'destructive'
+        });
+      } else {
+        setError('Failed to generate AI analysis');
+        toast({
+          title: 'Analysis Error',
+          description: 'Could not generate AI analysis for this stock.',
+          variant: 'destructive'
+        });
+      }
     } finally {
       setLoading(false);
     }

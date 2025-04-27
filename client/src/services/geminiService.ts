@@ -163,12 +163,7 @@ export const getStockAnalysis = async (symbol: string, stockData: any): Promise<
   } catch (error) {
     console.error('Error generating stock analysis:', error);
     
-    // Return a default analysis when there's an error
-    return {
-      suggestion: 'WATCH',
-      rationale: 'Unable to generate analysis at this time. Please check back later.',
-      confidence: 0,
-      timeframe: 'SHORT_TERM',
-    };
+    // Return an error status instead of mocked data
+    throw new Error('Unable to generate stock analysis. Please check API key and try again.');
   }
 };
