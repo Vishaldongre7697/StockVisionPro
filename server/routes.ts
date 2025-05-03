@@ -106,19 +106,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stock Routes
   app.get("/api/stocks", async (_req: Request, res: Response) => {
     try {
-      const stocks = await storage.getAllStocks();
+      // First, check if we have any stocks in storage
+      let stocks = await storage.getAllStocks();
+      
+      // If no stocks in storage, initialize with real-time data
+      if (stocks.length === 0) {
+        const defaultSymbols = [
+          'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META',
+          'TSLA', 'NVDA', 'JPM', 'V', 'JNJ',
+          'WMT', 'PG', 'DIS', 'NFLX', 'INTC'
+        ];
+        
+        // Fetch real-time data for each stock
+        for (const symbol of defaultSymbols) {
+          try {
+            const stockData = await fetchStockData(symbol);
+            
+            // Create stock in storage
+            await storage.createStock({
+              symbol: symbol,
+              name: getStockName(symbol),
+              exchange: 'NASDAQ',
+              currentPrice: stockData.price,
+              previousClose: stockData.price - stockData.change,
+              change: stockData.change,
+              changePercent: stockData.changePercent,
+              volume: stockData.volume,
+              marketCap: stockData.price * 1000000000, // Estimate
+              sector: getStockSector(symbol),
+              high52Week: stockData.price * 1.2,
+              low52Week: stockData.price * 0.8,
+              eps: 0,
+              pe: 0,
+              dividend: 0,
+              dividendYield: 0,
+              beta: 1,
+              description: `${getStockName(symbol)} is a publicly traded company.`,
+  
+            });
+          } catch (error) {
+            console.error(`Error initializing stock ${symbol}:`, error);
+          }
+        }
+        
+        // Refetch all stocks
+        stocks = await storage.getAllStocks();
+      }
+      
       res.status(200).json(stocks);
     } catch (error) {
+      console.error("Failed to fetch stocks:", error);
       res.status(500).json({ message: "Failed to fetch stocks" });
     }
   });
+  
+  // Helper function to get stock name
+  function getStockName(symbol: string): string {
+    const stockNames: Record<string, string> = {
+      'AAPL': 'Apple Inc.',
+      'MSFT': 'Microsoft Corporation',
+      'GOOGL': 'Alphabet Inc.',
+      'AMZN': 'Amazon.com Inc.',
+      'META': 'Meta Platforms Inc.',
+      'TSLA': 'Tesla Inc.',
+      'NVDA': 'NVIDIA Corporation',
+      'JPM': 'JPMorgan Chase & Co.',
+      'V': 'Visa Inc.',
+      'JNJ': 'Johnson & Johnson',
+      'WMT': 'Walmart Inc.',
+      'PG': 'Procter & Gamble Co.',
+      'DIS': 'Walt Disney Co.',
+      'NFLX': 'Netflix Inc.',
+      'INTC': 'Intel Corporation'
+    };
+    
+    return stockNames[symbol] || `${symbol} Stock`;
+  }
+  
+  // Helper function to get stock sector
+  function getStockSector(symbol: string): string {
+    const stockSectors: Record<string, string> = {
+      'AAPL': 'Technology',
+      'MSFT': 'Technology',
+      'GOOGL': 'Technology',
+      'AMZN': 'Consumer Cyclical',
+      'META': 'Technology',
+      'TSLA': 'Consumer Cyclical',
+      'NVDA': 'Technology',
+      'JPM': 'Financial Services',
+      'V': 'Financial Services',
+      'JNJ': 'Healthcare',
+      'WMT': 'Consumer Defensive',
+      'PG': 'Consumer Defensive',
+      'DIS': 'Communication Services',
+      'NFLX': 'Communication Services',
+      'INTC': 'Technology'
+    };
+    
+    return stockSectors[symbol] || 'General';
+  }
 
   app.get("/api/stocks/top", async (req: Request, res: Response) => {
     try {
       const limit = parseInt(req.query.limit as string) || 5;
+      
+      // Get all stocks
+      const stocks = await storage.getAllStocks();
+      
+      // If no stocks found, fetch them first
+      if (stocks.length === 0) {
+        // Trigger the /api/stocks endpoint to initialize stocks
+        await new Promise<void>((resolve) => {
+          app._router.handle({method: 'GET', url: '/api/stocks'} as any, {} as any, () => resolve());
+        });
+      }
+      
+      // Fetch real-time data for available stocks and update them
+      for (const stock of stocks.slice(0, 10)) { // Only update top 10 to avoid API rate limits
+        try {
+          const stockData = await fetchStockData(stock.symbol);
+          
+          // Update stock in storage with fresh data
+          await storage.updateStockPrice(
+            stock.id,
+            stockData.price,
+            stockData.change,
+            stockData.changePercent
+          );
+        } catch (err) {
+          console.error(`Error updating ${stock.symbol}:`, err);
+        }
+      }
+      
+      // Refetch top stocks with updated prices
       const topStocks = await storage.getTopStocks(limit);
       res.status(200).json(topStocks);
     } catch (error) {
+      console.error("Failed to fetch top stocks:", error);
       res.status(500).json({ message: "Failed to fetch top stocks" });
     }
   });
@@ -126,14 +250,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/stocks/:symbol", async (req: Request, res: Response) => {
     try {
       const symbol = req.params.symbol;
-      const stock = await storage.getStockBySymbol(symbol);
+      let stock = await storage.getStockBySymbol(symbol);
       
+      // If stock doesn't exist in our system, try to create it with API data
       if (!stock) {
-        return res.status(404).json({ message: "Stock not found" });
+        try {
+          // Fetch real-time data for this stock
+          const stockData = await fetchStockData(symbol);
+          
+          // Create the stock in our storage
+          stock = await storage.createStock({
+            symbol: symbol,
+            name: getStockName(symbol) || `${symbol} Stock`,
+            exchange: 'NASDAQ',
+            currentPrice: stockData.price,
+            previousClose: stockData.price - stockData.change,
+            change: stockData.change,
+            changePercent: stockData.changePercent,
+            volume: stockData.volume,
+            marketCap: stockData.price * 1000000000, // Estimate
+            sector: getStockSector(symbol) || 'General',
+            high52Week: stockData.price * 1.2,
+            low52Week: stockData.price * 0.8,
+            eps: 0,
+            pe: 0,
+            dividend: 0,
+            dividendYield: 0,
+            beta: 1,
+            description: `${getStockName(symbol) || symbol} is a publicly traded company.`
+          });
+        } catch (fetchError) {
+          console.error(`Failed to fetch data for stock ${symbol}:`, fetchError);
+          return res.status(404).json({ message: "Stock not found or could not fetch stock data" });
+        }
+      } else {
+        // Stock exists, update with latest data
+        try {
+          const stockData = await fetchStockData(symbol);
+          
+          // Update the stock with fresh data
+          stock = await storage.updateStockPrice(
+            stock.id,
+            stockData.price,
+            stockData.change,
+            stockData.changePercent
+          ) || stock;
+        } catch (updateError) {
+          console.error(`Error updating stock ${symbol}:`, updateError);
+          // Continue with existing stock data if update fails
+        }
       }
       
       res.status(200).json(stock);
     } catch (error) {
+      console.error("Failed to fetch stock:", error);
       res.status(500).json({ message: "Failed to fetch stock" });
     }
   });

@@ -398,7 +398,7 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
             <Scatter
               data={chartData}
               fill="#8884d8"
-              shape={(props) => {
+              shape={(props: any) => {
                 // Extract the necessary properties for CandleStick
                 const {
                   cx, cy, width, height, payload, index
