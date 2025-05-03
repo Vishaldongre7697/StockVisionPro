@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, Calculator, ArrowDown, ArrowUp, Layers, LineChart, CandlestickChart, Activity, Target, DollarSign, ArrowUpRight, TrendingDown } from "lucide-react";
+import { AlertTriangle, Calculator, ArrowDown, ArrowUp, Layers, LineChart, CandlestickChart, Activity, Target, DollarSign, ArrowUpRight, TrendingDown, AlertCircle } from "lucide-react";
 import {
   LineChart as RechartsLineChart,
   Line as RechartsLine,
@@ -28,9 +28,13 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   AreaChart,
-  Area
+  Area,
+  ComposedChart,
+  Bar,
+  Scatter
 } from "recharts";
 import { generateChartData, generateTimeLabels } from "@/lib/stockData";
+import { getHistoricalData, getIntradayData } from "@/services/marketDataService";
 
 const Predictions = () => {
   const [selectedStock, setSelectedStock] = useState<string>("RELIANCE");
@@ -39,28 +43,136 @@ const Predictions = () => {
   const [quantity, setQuantity] = useState<number>(10);
   const [entryPrice, setEntryPrice] = useState<number>(0);
   const [calculatedProfit, setCalculatedProfit] = useState<{ profit: number; percentage: number } | null>(null);
+  const [realTimePrice, setRealTimePrice] = useState<number | null>(null);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  
+  // Get WebSocket context for real-time data
+  const { isConnected, registerHandler } = useWebSocketContext();
   
   // Fetch all stocks
   const { data: stocks, isLoading: isLoadingStocks } = useQuery({
-    queryKey: ['/api/stocks'],
-    queryFn: getQueryFn<Stock[]>({ on401: 'returnNull' }),
+    queryKey: ["/api/stocks"],
+    queryFn: getQueryFn<Stock[]>({ on401: "returnNull" }),
   });
 
   // Fetch selected stock data
   const { data: stockData, isLoading: isLoadingStockData } = useQuery({
-    queryKey: ['/api/stocks', selectedStock],
-    queryFn: getQueryFn<Stock>({ on401: 'returnNull' }),
+    queryKey: ["/api/stocks", selectedStock],
+    queryFn: getQueryFn<Stock>({ on401: "returnNull" }),
     enabled: !!selectedStock,
   });
 
   // Fetch AI suggestion for the selected stock
   const { data: aiSuggestion, isLoading: isLoadingAiSuggestion } = useQuery({
-    queryKey: ['/api/ai-suggestions/stock', stockData?.id],
-    queryFn: getQueryFn<AiSuggestion>({ on401: 'returnNull' }),
+    queryKey: ["/api/ai-suggestions/stock", stockData?.id],
+    queryFn: getQueryFn<AiSuggestion>({ on401: "returnNull" }),
     enabled: !!stockData?.id,
+  });
+  
+  // Fetch top AI suggestions
+  const { data: topAiSuggestions, isLoading: isLoadingTopSuggestions } = useQuery({
+    queryKey: ["/api/ai-suggestions/top"],
+    queryFn: getQueryFn<(AiSuggestion & { stock: Stock })[]>({ on401: "returnNull" }),
   });
 
   // Generate chart data
+  useEffect(() => {
+    const fetchChartData = async () => {
+      if (!stockData) return;
+      
+      try {
+        let data: any[];
+        if (timeframe === "1D") {
+          data = await getIntradayData(selectedStock, "15min");
+        } else if (timeframe === "1W") {
+          data = await getHistoricalData(selectedStock, "daily");
+          // Filter to last 7 days
+          data = data.slice(-7);
+        } else {
+          data = await getHistoricalData(selectedStock, "daily");
+          // Filter to last 30 days
+          data = data.slice(-30);
+        }
+        
+        // Add prediction data (using aiSuggestion if available)
+        const withPredictions = data.map((point, index) => {
+          // Add predictions only to the future part (last 30% of the chart)
+          const isPrediction = index > Math.floor(data.length * 0.7);
+          let predictionValue = null;
+          
+          if (isPrediction) {
+            // Use AI suggestion if available
+            if (aiSuggestion?.targetPrice && point.close) {
+              // Create a gradual movement toward the target price
+              const predictedChange = aiSuggestion.targetPrice - data[Math.floor(data.length * 0.7)].close;
+              const step = predictedChange / (data.length * 0.3);
+              const stepsFromBoundary = index - Math.floor(data.length * 0.7);
+              predictionValue = data[Math.floor(data.length * 0.7)].close + (step * stepsFromBoundary);
+            } else {
+              // Fallback if no AI suggestion available
+              predictionValue = point.close * (1 + ((index - Math.floor(data.length * 0.7)) / 100));
+            }
+          }
+          
+          return {
+            ...point,
+            prediction: predictionValue,
+            formattedDate: new Date(point.date || point.datetime).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              ...(timeframe === "1M" ? { year: "numeric" } : {})
+            }),
+            time: point.date || point.datetime
+          };
+        });
+        
+        setChartData(withPredictions);
+      } catch (error) {
+        console.error("Error fetching chart data:", error);
+        // Fallback to generated data
+        const generatedData = generatePredictionChartData();
+        setChartData(generatedData);
+      }
+    };
+    
+    fetchChartData();
+  }, [stockData, selectedStock, timeframe, aiSuggestion]);
+
+  // Subscribe to real-time updates for the selected stock
+  useEffect(() => {
+    if (!isConnected || !selectedStock) return;
+    
+    const handleStockUpdate = (data: any) => {
+      setRealTimePrice(data.price);
+      setLastUpdated(new Date());
+      
+      // Update chart data with the new price point
+      setChartData(prevData => {
+        if (!prevData || prevData.length === 0) return prevData;
+        
+        const updatedData = [...prevData];
+        const lastPoint = {...updatedData[updatedData.length - 1]};
+        
+        // Update last point with real-time data
+        lastPoint.close = data.price;
+        lastPoint.high = Math.max(lastPoint.high || 0, data.price);
+        lastPoint.low = Math.min(lastPoint.low || Number.MAX_SAFE_INTEGER, data.price);
+        
+        updatedData[updatedData.length - 1] = lastPoint;
+        return updatedData;
+      });
+    };
+    
+    // Register for updates
+    const unregister = registerHandler(selectedStock, handleStockUpdate);
+    
+    return () => {
+      unregister();
+    };
+  }, [isConnected, selectedStock, registerHandler]);
+
+  // Generate chart data (fallback if API fails)
   const generatePredictionChartData = () => {
     if (!stockData) return [];
 
@@ -76,16 +188,19 @@ const Predictions = () => {
     const chartData = historicalData.map((price, index) => ({
       time: labels[index],
       price,
-      prediction: index > 20 ? price * (1 + (Math.random() * 0.04 - 0.01)) : null
+      prediction: index > 20 ? price * (1 + (Math.random() * 0.04 - 0.01)) : null,
+      open: price * 0.99,
+      close: price,
+      high: price * 1.01,
+      low: price * 0.98,
+      volume: Math.floor(Math.random() * 100000) + 50000
     }));
 
     return chartData;
   };
-
-  const chartData = generatePredictionChartData();
   
   // Calculate entry, target and stop loss prices
-  const entryPriceValue = stockData?.currentPrice || 0;
+  const entryPriceValue = entryPrice || stockData?.currentPrice || 0;
   const targetPriceValue = aiSuggestion?.targetPrice || (entryPriceValue * 1.05);
   const stopLossValue = aiSuggestion?.stopLoss || (entryPriceValue * 0.95);
 
@@ -93,7 +208,7 @@ const Predictions = () => {
   const handleCalculateProfit = () => {
     if (!stockData) return;
     
-    const currentPrice = stockData.currentPrice;
+    const currentPrice = realTimePrice || stockData.currentPrice;
     const profit = (targetPriceValue - (entryPrice || currentPrice)) * quantity;
     const percentage = ((targetPriceValue - (entryPrice || currentPrice)) / (entryPrice || currentPrice)) * 100;
     
@@ -106,9 +221,153 @@ const Predictions = () => {
     setEntryPrice(0);
     setCalculatedProfit(null);
   };
+  
+  // Format display price
+  const displayPrice = realTimePrice || stockData?.currentPrice;
+  const getChangeClass = (change: number) => {
+    return change >= 0 
+      ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+      : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+  };
+  
+  // Custom tooltip component for charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-card p-2 border border-border shadow-sm rounded-md text-xs">
+          <p className="font-medium">{label || payload[0].payload.formattedDate}</p>
+          
+          {payload.map((entry: any, index: number) => {
+            if (entry.dataKey === "prediction" && !entry.value) return null;
+            
+            return (
+              <p key={index} style={{ color: entry.color }}>
+                {entry.name || entry.dataKey}: ₹{entry.value?.toFixed(2)}
+              </p>
+            );
+          })}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Define custom candlestick component
+  interface CandleStickProps {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    open: number;
+    close: number;
+    high: number;
+    low: number;
+    yMin: number;
+    yMax: number;
+  }
+
+  const CandleStick = (props: CandleStickProps) => {
+    const { x, y, width, height, open, close, high, low, yMin, yMax } = props;
+    const isIncreasing = close > open;
+    const color = isIncreasing ? "#10B981" : "#EF4444";
+    
+    // Calculate positions using yMin and yMax
+    const yRange = yMax - yMin;
+    const toY = (val: number) => y + height - ((val - yMin) / yRange) * height;
+    
+    const yOpen = toY(open);
+    const yClose = toY(close);
+    const yHigh = toY(high);
+    const yLow = toY(low);
+    
+    return (
+      <g>
+        {/* Wick line */}
+        <line x1={x} x2={x} y1={yHigh} y2={yLow} stroke={color} />
+        
+        {/* Candle body */}
+        <rect
+          x={x - width / 2}
+          y={Math.min(yOpen, yClose)}
+          width={width}
+          height={Math.max(1, Math.abs(yOpen - yClose))}
+          fill={color}
+          stroke="none"
+        />
+      </g>
+    );
+  };
 
   return (
     <div className="space-y-6">
+      {/* Top AI Suggestions Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Highest Potential Stocks</CardTitle>
+          <CardDescription>
+            Stocks with the highest AI-predicted growth potential
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingTopSuggestions ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-32 w-full" />
+              ))}
+            </div>
+          ) : topAiSuggestions && topAiSuggestions.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {topAiSuggestions.map((suggestion) => (
+                <Card key={suggestion.id} className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => setSelectedStock(suggestion.stock.symbol)}>
+                  <CardHeader className="p-4 pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-base">{suggestion.stock.symbol}</CardTitle>
+                        <CardDescription className="text-xs truncate max-w-[150px]">
+                          {suggestion.stock.name}
+                        </CardDescription>
+                      </div>
+                      <Badge className={getChangeClass(suggestion.stock.changePercent || 0)}>
+                        {(suggestion.stock.changePercent || 0) >= 0 ? "+" : ""}
+                        {(suggestion.stock.changePercent || 0).toFixed(2)}%
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Current</span>
+                      <span className="text-lg font-bold">₹{suggestion.stock.currentPrice.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium flex items-center">
+                        <Target className="h-3 w-3 mr-1 text-green-500" /> Target
+                      </span>
+                      <div className="flex items-center">
+                        <span className="text-lg font-bold text-green-600">₹{suggestion.targetPrice?.toFixed(2) || "--"}</span>
+                        <span className="text-xs ml-1 text-green-600">
+                          (+{((((suggestion.targetPrice || 0) - suggestion.stock.currentPrice) / suggestion.stock.currentPrice) * 100).toFixed(1)}%)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between mt-2">
+                      <Badge variant="outline" className="text-xs">{suggestion.timeframe || "MEDIUM_TERM"}</Badge>
+                      <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        {suggestion.confidence || 75}% Confidence
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center">
+              <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p>No AI suggestions available at this time.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Price Predictions</h2>
         
@@ -143,11 +402,7 @@ const Predictions = () => {
                 {stockData && (
                   <Badge 
                     variant="outline" 
-                    className={`ml-2 ${
-                      (stockData?.changePercent || 0) >= 0 
-                        ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                        : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                    }`}
+                    className={`ml-2 ${getChangeClass(stockData?.changePercent || 0)}`}
                   >
                     {(stockData?.changePercent || 0) >= 0 ? '+' : ''}
                     {stockData?.changePercent?.toFixed(2)}%
@@ -155,10 +410,15 @@ const Predictions = () => {
                 )}
               </CardTitle>
               <CardDescription>
-                Current price: ₹{stockData?.currentPrice.toLocaleString('en-IN', {
+                Current price: ₹{displayPrice?.toLocaleString('en-IN', {
                   maximumFractionDigits: 2,
                   minimumFractionDigits: 2
                 }) || '0.00'}
+                {realTimePrice && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    (Updated: {lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})})
+                  </span>
+                )}
               </CardDescription>
             </div>
             
@@ -214,11 +474,11 @@ const Predictions = () => {
         
         <CardContent className="pt-2">
           <div className="h-[300px] w-full">
-            {isLoadingStockData ? (
+            {isLoadingStockData || chartData.length === 0 ? (
               <div className="h-full w-full flex items-center justify-center">
                 <Skeleton className="h-full w-full" />
               </div>
-            ) : (
+            ) : chartType === "line" ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={chartData}
@@ -240,19 +500,17 @@ const Predictions = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                  <XAxis dataKey="time" />
+                  <XAxis dataKey="formattedDate" />
                   <YAxis domain={['auto', 'auto']} />
-                  <Tooltip 
-                    formatter={(value: number) => [`₹${value.toFixed(2)}`, '']}
-                    labelFormatter={(label) => `Time: ${label}`}
-                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Area
                     type="monotone"
-                    dataKey="price"
+                    dataKey="close"
                     stroke="#4F46E5"
                     fillOpacity={1}
                     fill="url(#colorPrice)"
                     strokeWidth={2}
+                    name="Price"
                   />
                   <Area
                     type="monotone"
@@ -262,6 +520,7 @@ const Predictions = () => {
                     fill="url(#colorPrediction)"
                     strokeWidth={2}
                     strokeDasharray="5 5"
+                    name="Prediction"
                   />
                   <ReferenceLine
                     y={entryPriceValue}
@@ -283,10 +542,101 @@ const Predictions = () => {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart
+                  data={chartData}
+                  margin={{
+                    top: 5,
+                    right: 30,
+                    left: 30,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                  <XAxis dataKey="formattedDate" />
+                  <YAxis yAxisId="price" domain={['auto', 'auto']} />
+                  <YAxis yAxisId="volume" orientation="right" tickFormatter={(value) => `${(value/1000).toFixed(0)}K`} />
+                  <Tooltip content={<CustomTooltip />} />
+                  
+                  {/* Volume bars at the bottom */}
+                  <Bar 
+                    yAxisId="volume"
+                    dataKey="volume" 
+                    fill="#8884d8" 
+                    opacity={0.3} 
+                    barSize={10}
+                  />
+                  
+                  {/* Add a scatter plot for custom rendering of candlesticks */}
+                  <Scatter
+                    yAxisId="price"
+                    data={chartData}
+                    shape={(props) => {
+                      const { cx, cy, width, payload } = props;
+                      
+                      // Calculate min/max for scaling
+                      const yMin = Math.min(...chartData.map(d => d.low));
+                      const yMax = Math.max(...chartData.map(d => d.high));
+                      
+                      return (
+                        <CandleStick
+                          x={cx}
+                          y={cy}
+                          width={10} // Fixed width for candles
+                          height={300} // This will be adjusted by the scaling logic
+                          open={payload.open}
+                          close={payload.close}
+                          high={payload.high}
+                          low={payload.low}
+                          yMin={yMin}
+                          yMax={yMax}
+                        />
+                      );
+                    }}
+                    line={false}
+                  />
+                  
+                  {/* Prediction line */}
+                  <RechartsLine
+                    yAxisId="price"
+                    type="monotone"
+                    dataKey="prediction"
+                    stroke="#10B981"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                    name="Prediction"
+                  />
+                  
+                  {/* Reference lines */}
+                  <ReferenceLine
+                    yAxisId="price"
+                    y={entryPriceValue}
+                    label="Entry"
+                    stroke="#6366F1"
+                    strokeDasharray="3 3"
+                  />
+                  <ReferenceLine
+                    yAxisId="price"
+                    y={targetPriceValue}
+                    label="Target"
+                    stroke="#10B981"
+                    strokeDasharray="3 3"
+                  />
+                  <ReferenceLine
+                    yAxisId="price"
+                    y={stopLossValue}
+                    label="Stop Loss"
+                    stroke="#EF4444"
+                    strokeDasharray="3 3"
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
             )}
           </div>
           
-          <div className="flex justify-between items-center mt-4 text-sm">
+          <div className="flex flex-wrap justify-between items-center mt-4 text-sm gap-2">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-primary rounded-full mr-2"></div>
               <span>Actual Price</span>

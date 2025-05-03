@@ -15,6 +15,8 @@ import {
   ReferenceLine,
   Area 
 } from "recharts";
+import LiveStockChart from "./LiveStockChart";
+import { useWebSocketContext } from "@/lib/websocketContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generateChartData, generateTimeLabels, formatIndianCurrency } from "@/lib/stockData";
 import { cn } from "@/lib/utils";
@@ -101,57 +103,17 @@ const StockAnalysis = ({ stockSymbol = "RELIANCE" }: StockAnalysisProps) => {
           
           <div className="mb-6">
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={formattedChartData}
-                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                  <YAxis 
-                    domain={['auto', 'auto']}
-                    tickFormatter={(value) => `₹${value}`}
-                    width={60}
-                  />
-                  <Tooltip 
-                    formatter={(value) => [`₹${value}`, 'Price']}
-                    labelFormatter={(label) => `Time: ${label}`}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="price" 
-                    stroke={isPositive ? "#10B981" : "#EF4444"} 
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 6 }}
-                  />
-                  
-                  {/* AI Prediction zone for demonstration */}
-                  {aiSuggestion && aiSuggestion.targetPrice && aiSuggestion.stopLoss && (
-                    <>
-                      <ReferenceLine 
-                        y={aiSuggestion.targetPrice} 
-                        stroke="#10B981" 
-                        strokeDasharray="3 3" 
-                        label={{ value: 'Target', position: 'right', fill: '#10B981' }} 
-                      />
-                      <ReferenceLine 
-                        y={aiSuggestion.stopLoss} 
-                        stroke="#EF4444" 
-                        strokeDasharray="3 3" 
-                        label={{ value: 'Stop Loss', position: 'right', fill: '#EF4444' }} 
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="price" 
-                        stroke="none" 
-                        fill={isPositive ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)"} 
-                      />
-                    </>
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+              {/* Using LiveStockChart for real-time data */}
+              <LiveStockChart 
+                symbol={stockSymbol}
+                companyName={stock.name}
+                defaultTimeframe={timeframe === "1D" ? "intraday" : 
+                                timeframe === "1W" ? "daily" : 
+                                timeframe === "1M" ? "daily" : 
+                                timeframe === "3M" ? "weekly" : "monthly"}
+                defaultChartType={isPositive ? "area" : "line"}
+                height={300}
+              />
             <div className="flex justify-center mt-2">
               <div className="flex space-x-2 text-sm">
                 {["1D", "1W", "1M", "3M", "1Y", "All"].map((period) => (
