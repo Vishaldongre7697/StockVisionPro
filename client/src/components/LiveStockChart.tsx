@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,15 +7,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
-  Legend, ResponsiveContainer, Area, AreaChart, BarChart, Bar 
+  Legend, ResponsiveContainer, Area, AreaChart, BarChart, Bar,
+  ReferenceLine, Rectangle, Scatter, ComposedChart
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, RefreshCw, AlertTriangle, 
   Clock, Calendar, LineChart as LineChartIcon, BarChart3, 
-  AreaChart as AreaChartIcon
+  AreaChart as AreaChartIcon, CandlestickChart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getHistoricalData, getIntradayData } from '@/services/marketDataService';
+import { 
+  getHistoricalData, 
+  getIntradayData, 
+  registerForUpdates, 
+  subscribeToSymbol 
+} from '@/services/marketDataService';
 
 export interface LiveStockChartProps {
   symbol: string;
@@ -23,7 +29,7 @@ export interface LiveStockChartProps {
   className?: string;
   showControls?: boolean;
   defaultTimeframe?: 'intraday' | 'daily' | 'weekly' | 'monthly';
-  defaultChartType?: 'line' | 'area' | 'bar';
+  defaultChartType?: 'line' | 'area' | 'bar' | 'candlestick';
   height?: number;
 }
 
@@ -54,7 +60,7 @@ export default function LiveStockChart({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState<'intraday' | 'daily' | 'weekly' | 'monthly'>(defaultTimeframe);
-  const [chartType, setChartType] = useState<'line' | 'area' | 'bar'>(defaultChartType);
+  const [chartType, setChartType] = useState<'line' | 'area' | 'bar' | 'candlestick'>(defaultChartType || 'line');
   const [intradayInterval, setIntradayInterval] = useState<'1min' | '5min' | '15min' | '30min' | '60min'>('15min');
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   
@@ -107,18 +113,74 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
     }
   }, [symbol, timeframe, intradayInterval]);
   
-  // Initial data load and setup refresh interval
+  // Update single data point when real-time data is received
+  const updateRealTimeData = useCallback((data: any) => {
+    setChartData(prevData => {
+      if (!prevData || prevData.length === 0) return prevData;
+
+      // For intraday, we want to add a new point
+      if (timeframe === 'intraday') {
+        // Create a new data point with current timestamp
+        const now = new Date();
+        const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const newPoint = {
+          date: now.toISOString(),
+          datetime: now.toISOString(),
+          open: data.price,
+          high: data.price,
+          low: data.price,
+          close: data.price,
+          volume: data.volume || 0,
+          formattedDate: formattedTime,
+          tooltip: `Open: $${data.price.toFixed(2)} Close: $${data.price.toFixed(2)}\nHigh: $${data.price.toFixed(2)} Low: $${data.price.toFixed(2)}\nVolume: ${((data.volume || 0)/1000).toFixed(0)}K`
+        };
+        
+        // Limit to reasonable number of points
+        const updatedData = [...prevData, newPoint].slice(-100);
+        return updatedData;
+      } else {
+        // For other timeframes, we update the latest point
+        const updatedData = [...prevData];
+        const lastPoint = {...updatedData[updatedData.length - 1]};
+        
+        // Update the closing price and potentially the high/low
+        lastPoint.close = data.price;
+        lastPoint.high = Math.max(lastPoint.high, data.price);
+        lastPoint.low = Math.min(lastPoint.low, data.price);
+        
+        // Update tooltip
+        lastPoint.tooltip = `Open: $${lastPoint.open.toFixed(2)} Close: $${lastPoint.close.toFixed(2)}\nHigh: $${lastPoint.high.toFixed(2)} Low: $${lastPoint.low.toFixed(2)}\nVolume: ${((lastPoint.volume || 0)/1000).toFixed(0)}K`;
+        
+        updatedData[updatedData.length - 1] = lastPoint;
+        return updatedData;
+      }
+    });
+    
+    // Update lastUpdated
+    setLastUpdated(new Date());
+  }, [timeframe]);
+
+  // Initial data load and setup real-time updates
   useEffect(() => {
+    // Fetch initial data
     fetchStockData();
     
-    // Set up refresh interval - more frequent for intraday
+    // Subscribe to real-time updates
+    subscribeToSymbol(symbol);
+    const unsubscribe = registerForUpdates(symbol, updateRealTimeData);
+    
+    // Set up refresh interval for backup (if WebSocket fails)
     const intervalTime = timeframe === 'intraday' ? 30000 : 60000; // 30 sec for intraday, 1 min for others
     const intervalId = setInterval(() => {
       fetchStockData();
     }, intervalTime);
     
-    return () => clearInterval(intervalId);
-  }, [fetchStockData, timeframe]);
+    return () => {
+      clearInterval(intervalId);
+      unsubscribe();
+    };
+  }, [fetchStockData, timeframe, symbol, updateRealTimeData]);
   
   // Determine price change
   const getPriceChange = () => {
@@ -260,6 +322,82 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
       );
     }
     
+    if (chartType === 'candlestick') {
+      // Custom candle rendering
+      const CandleStick = (props: any) => {
+        const { x, y, width, height, low, high, open, close } = props;
+        const isIncreasing = close > open;
+        const color = isIncreasing ? '#16a34a' : '#e11d48'; // Green for increasing, red for decreasing
+        const yHigh = y + height / 2 - ((high - low) / (props.domain[1] - props.domain[0])) * (high - props.domain[0]) * height;
+        const yOpen = y + height / 2 - ((open - low) / (props.domain[1] - props.domain[0])) * (open - props.domain[0]) * height;
+        const yClose = y + height / 2 - ((close - low) / (props.domain[1] - props.domain[0])) * (close - props.domain[0]) * height;
+        const yLow = y + height / 2 - ((low - low) / (props.domain[1] - props.domain[0])) * (low - props.domain[0]) * height;
+        const halfWidth = width / 2;
+        
+        return (
+          <g>
+            {/* The wick line */}
+            <line x1={x} y1={yHigh} x2={x} y2={yLow} stroke={color} />
+            
+            {/* The candle body */}
+            <rect 
+              x={x - halfWidth} 
+              y={Math.min(yOpen, yClose)} 
+              width={width} 
+              height={Math.abs(yOpen - yClose) || 1} 
+              fill={color} 
+              stroke={color}
+            />
+          </g>
+        );
+      };
+      
+      return (
+        <ResponsiveContainer width="100%" height={height}>
+          <ComposedChart {...commonProps}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <XAxis 
+              dataKey="formattedDate" 
+              {...commonAxisProps} 
+            />
+            <YAxis 
+              {...commonAxisProps}
+              tickFormatter={(value) => `$${value.toFixed(0)}`}
+              domain={['dataMin', 'dataMax']}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <defs>
+              <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            
+            {/* Volume bars at the bottom */}
+            <Bar 
+              dataKey="volume" 
+              barSize={6}
+              fill="url(#volumeGradient)" 
+              opacity={0.5}
+              yAxisId="volume"
+            />
+            
+            {/* Custom candlestick rendering */}
+            <Scatter
+              data={chartData}
+              fill="#8884d8"
+              shape={<CandleStick />}
+              line={false}
+              lineType="joint"
+              name="Price"
+              isAnimationActive={false}
+              legendType="none"
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      );
+    }
+    
     return null;
   };
   
@@ -391,6 +529,10 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
               <ToggleGroupItem value="bar" size="sm" className="text-xs h-7 px-2">
                 <BarChart3 className="h-3 w-3 mr-1" />
                 Bar
+              </ToggleGroupItem>
+              <ToggleGroupItem value="candlestick" size="sm" className="text-xs h-7 px-2">
+                <CandlestickChart className="h-3 w-3 mr-1" />
+                Candle
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
