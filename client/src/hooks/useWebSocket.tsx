@@ -42,10 +42,15 @@ export default function useWebSocket(options: UseWebSocketOptions = {}) {
     setConnectionError(null);
     
     try {
+      // Get the base URL
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const host = window.location.host;
       
-      console.log('Connecting to WebSocket server at:', wsUrl);
+      // For Replit environment, use the current host with /ws path
+      const wsUrl = `${protocol}//${host}/ws`;
+      
+      // Log the connection attempt
+      console.log(`Attempting WebSocket connection to: ${wsUrl}`);
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
       
@@ -84,12 +89,21 @@ export default function useWebSocket(options: UseWebSocketOptions = {}) {
       socket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          console.log('Received WebSocket message:', message);
           
-          if (message.type && message.symbol) {
-            // Handle typed messages with symbols (like stock updates)
+          if (message.type === 'heartbeat') {
+            console.log('Received heartbeat from server');
+            // Send ping to keep connection alive
+            if (socket.readyState === WebSocket.OPEN) {
+              socket.send(JSON.stringify({ type: 'ping' }));
+            }
+          } else if (message.type === 'pong') {
+            console.log('Received pong from server');
+          } else if (message.type === 'stock_update' && message.symbol) {
+            // Handle stock updates
             handleTypedMessage(message);
           } else {
-            console.log('Received unhandled WebSocket message:', message);
+            console.log('Received unhandled WebSocket message type:', message.type);
           }
         } catch (error) {
           console.error('Error processing WebSocket message:', error);
@@ -186,6 +200,22 @@ export default function useWebSocket(options: UseWebSocketOptions = {}) {
       }
     }
   }, []);
+  
+  // Set up ping interval to keep connection alive
+  useEffect(() => {
+    if (isConnected && socketRef.current) {
+      const pingIntervalId = setInterval(() => {
+        if (socketRef.current?.readyState === WebSocket.OPEN) {
+          socketRef.current.send(JSON.stringify({ type: 'ping' }));
+          console.log('Sent ping to server');
+        }
+      }, 30000); // Send ping every 30 seconds
+      
+      return () => {
+        clearInterval(pingIntervalId);
+      };
+    }
+  }, [isConnected]);
   
   // Connect on mount, disconnect on unmount
   useEffect(() => {
