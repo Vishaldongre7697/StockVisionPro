@@ -713,7 +713,7 @@ const Predictions = () => {
                   type="number"
                   value={entryPrice || ''}
                   onChange={(e) => setEntryPrice(parseFloat(e.target.value) || 0)}
-                  placeholder={stockData?.currentPrice.toString() || "Enter price"}
+                  placeholder={stockData?.currentPrice ? stockData.currentPrice.toString() : "Enter price"}
                 />
                 <p className="text-xs text-muted-foreground">
                   Leave blank to use current market price

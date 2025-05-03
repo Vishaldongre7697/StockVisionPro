@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getChatResponse, ChatMessage, getStockAnalysis } from '../services/geminiService';
+import { getFinancialAdvice } from '../services/openaiService';
 import { useAuth } from '@/lib/auth';
 
 interface UseChatReturn {
@@ -88,8 +89,23 @@ export const useChat = (
         // You could add API call to get user's portfolio here
       }
       
-      // Get response from the AI
-      const response = await getChatResponse(formattedMessages, userStocks);
+      let response = '';
+      
+      // Try to use OpenAI first, fall back to Gemini if not available
+      try {
+        // Convert messages to format for OpenAI
+        const chatHistory = messages.map(msg => ({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        }));
+        
+        // Get response from OpenAI
+        response = await getFinancialAdvice(messageText, chatHistory);
+      } catch (openaiError) {
+        console.warn('OpenAI fallback error:', openaiError);
+        // Fall back to Gemini if OpenAI fails
+        response = await getChatResponse(formattedMessages, userStocks);
+      }
       
       // Add AI response to the chat
       const aiMessage = {
