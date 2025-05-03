@@ -115,285 +115,247 @@ const EnhancedSuhuAI = ({
   };
 
   return (
-    <div className={cn("h-full flex overflow-hidden rounded-lg border", className)}>
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full">
-        {/* Header */}
-        <CardHeader className="pb-3 pt-5">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center">
-                <Avatar className="h-8 w-8 mr-2">
-                  <AvatarImage src="/ai-avatar.png" alt="Suhu AI" />
-                  <AvatarFallback className="bg-primary/10">
-                    <Bot className="h-4 w-4 text-primary" />
-                  </AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-xl">Suhu AI</CardTitle>
-              </div>
-              <CardDescription className="mt-1">
-                Your intelligent financial advisor and market analyst
-              </CardDescription>
+    <div className={cn("h-full flex flex-col bg-background", className)}>
+      {/* Messages Area - ChatGPT style */}
+      <div className="flex-1 overflow-y-auto py-4 px-2 md:px-4">
+        {messages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-4">
+            <Bot className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">How can I help you with investing today?</h3>
+            <p className="text-sm text-muted-foreground max-w-md mb-8">
+              I can analyze stocks, explain market trends, or help with investment strategies. Just ask a question to get started.            
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-2xl">
+              {[
+                "Explain the concept of dollar-cost averaging",
+                "What stocks are trending this week?",
+                "How do interest rates affect the market?",
+                "What is a P/E ratio and why is it important?",
+              ].map((prompt, i) => (
+                <Button 
+                  key={i} 
+                  variant="outline" 
+                  className="justify-start text-sm h-auto py-3 px-4 font-normal"
+                  onClick={() => {
+                    setInputMessage(prompt);
+                    if (textareaRef.current) {
+                      textareaRef.current.focus();
+                    }
+                  }}
+                >
+                  <MessageSquare className="h-3 w-3 mr-2 text-muted-foreground" />
+                  {prompt}
+                </Button>
+              ))}
             </div>
-            <div className="flex space-x-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              >
-                {isSidebarOpen ? (
-                  <PanelRightClose className="h-4 w-4" />
-                ) : (
-                  <PanelRightOpen className="h-4 w-4" />
+          </div>
+        ) : (
+          <div className="space-y-6 max-w-3xl mx-auto">
+            {messages.map((message) => (
+              <div 
+                key={message.id}
+                className={cn(
+                  "flex items-start gap-4 px-2",
+                  message.sender === 'user' ? "justify-end md:justify-start" : "justify-start"
                 )}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-
-        <Separator />
-
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message) => (
-            <div 
-              key={message.id} 
-              className={cn(
-                "flex items-start gap-3",
-                message.sender === 'user' ? "justify-end" : "justify-start"
-              )}
-            >
-              {message.sender === 'ai' && (
-                <Avatar className="h-8 w-8 mt-1">
-                  <AvatarFallback className="bg-primary/10">
-                    <Bot className="h-4 w-4 text-primary" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              
-              <div className={cn(
-                "max-w-[80%] rounded-lg px-4 py-3",
-                message.sender === 'user' 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-muted"
-              )}>
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="font-medium text-xs">
-                    {message.sender === 'user' ? 'You' : 'Suhu AI'}
-                  </span>
-                  <span className="text-xs opacity-70">
-                    {formatTimestamp(message.timestamp)}
-                  </span>
-                </div>
-                <div className="text-sm whitespace-pre-line">
-                  {formatMessageText(message.text)}
-                </div>
-              </div>
-              
-              {message.sender === 'user' && (
-                <Avatar className="h-8 w-8 mt-1">
-                  <AvatarFallback className="bg-secondary">
-                    <User className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
-            </div>
-          ))}
-          
-          {isTyping && (
-            <div className="flex items-start gap-3">
-              <Avatar className="h-8 w-8 mt-1">
-                <AvatarFallback className="bg-primary/10">
-                  <Bot className="h-4 w-4 text-primary" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="bg-muted rounded-lg px-4 py-3">
-                <div className="flex items-center gap-1">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Thinking...</span>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <div ref={messagesEndRef} />
-        </div>
-        
-        {/* Input Area */}
-        <CardFooter className="p-4 border-t">
-          <div className="flex w-full gap-2">
-            <Button variant="outline" size="icon" className="shrink-0">
-              <Mic className="h-4 w-4" />
-            </Button>
-            
-            <div className="flex-1 relative">
-              <Textarea
-                ref={textareaRef}
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask Suhu AI about market trends, stocks, or investment strategies..."
-                className="min-h-[40px] resize-none pr-12"
-                rows={1}
-              />
-              <Button 
-                size="sm" 
-                className="absolute right-2 bottom-2" 
-                onClick={handleSendMessage}
-                disabled={isTyping || !inputMessage.trim()}
               >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
+                {message.sender === 'ai' && (
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Bot className="h-4 w-4 text-primary" />
+                  </div>
+                )}
+                
+                <div className={cn(
+                  "max-w-[90%] md:max-w-[75%] rounded-lg px-4 py-3",
+                  message.sender === 'user' 
+                    ? "bg-primary text-primary-foreground ml-auto md:ml-0" 
+                    : "bg-muted"
+                )}>
+                  <div className="text-sm whitespace-pre-line">
+                    {formatMessageText(message.text)}
+                  </div>
+                </div>
+                
+                {message.sender === 'user' && (
+                  <div className="hidden md:flex w-8 h-8 rounded-full bg-secondary flex-center shrink-0 mt-0.5 items-center justify-center">
+                    <User className="h-4 w-4" />
+                  </div>
+                )}
+              </div>
+            ))}
             
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="shrink-0"
-              onClick={clearMessages}
-              title="Clear conversation"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {isTyping && (
+              <div className="flex items-start gap-4 px-2">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Bot className="h-4 w-4 text-primary" />
+                </div>
+                <div className="bg-muted rounded-lg px-4 py-2">
+                  <div className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-foreground/70 rounded-full animate-pulse delay-0"></span>
+                    <span className="w-1.5 h-1.5 bg-foreground/70 rounded-full animate-pulse delay-150"></span>
+                    <span className="w-1.5 h-1.5 bg-foreground/70 rounded-full animate-pulse delay-300"></span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div ref={messagesEndRef} />
           </div>
-        </CardFooter>
+        )}
       </div>
       
-      {/* Sidebar */}
-      {isSidebarOpen && (
-        <div className="w-80 border-l flex flex-col">
-          <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <div className="border-b">
-              <TabsList className="w-full justify-start p-0 h-auto bg-transparent rounded-none">
-                <TabsTrigger 
-                  value="chat" 
-                  className={cn(
-                    "rounded-none flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary",
-                    "data-[state=active]:shadow-none"
-                  )}
+      {/* Input Area - ChatGPT style */}
+      <div className="p-4 border-t">
+        <div className="max-w-3xl mx-auto relative">
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Message SuhuAI..."
+              className="min-h-[50px] resize-none rounded-xl pr-12 py-3 pl-4 border-muted-foreground/20"
+              rows={1}
+            />
+            <Button 
+              size="icon" 
+              className="absolute right-2 bottom-2 h-8 w-8 rounded-lg" 
+              onClick={handleSendMessage}
+              disabled={isTyping || !inputMessage.trim()}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground px-1">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-auto px-2 py-1 text-xs"
+                onClick={clearMessages}
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Clear chat
+              </Button>
+              
+              {showSidebar && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-auto px-2 py-1 text-xs"
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Chat
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="features" 
-                  className={cn(
-                    "rounded-none flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary",
-                    "data-[state=active]:shadow-none"
+                  {isSidebarOpen ? (
+                    <>
+                      <PanelRightClose className="h-3 w-3 mr-1" />
+                      Hide examples
+                    </>
+                  ) : (
+                    <>
+                      <PanelRightOpen className="h-3 w-3 mr-1" />
+                      Show examples
+                    </>
                   )}
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Features
-                </TabsTrigger>
-              </TabsList>
+                </Button>
+              )}
             </div>
             
-            <TabsContent value="chat" className="flex-1 p-0 m-0">
-              <div className="p-4 space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Suggested prompts to try:
-                </p>
-                
-                <div className="space-y-2">
-                  {[
-                    "Explain the concept of dollar-cost averaging for beginners",
-                    "What factors should I consider when building a diversified portfolio?",
-                    "How do rising interest rates affect the stock market?",
-                    "What are the key financial metrics to evaluate a growth stock?",
-                    "What is the difference between active and passive investing?",
-                  ].map((prompt, i) => (
-                    <Button 
-                      key={i} 
-                      variant="outline" 
-                      className="w-full justify-start text-sm h-auto py-2 font-normal"
-                      onClick={() => {
-                        setInputMessage(prompt);
-                        if (textareaRef.current) {
-                          textareaRef.current.focus();
-                        }
-                      }}
-                    >
-                      <MessageSquare className="h-3 w-3 mr-2 text-muted-foreground" />
-                      {prompt}
-                    </Button>
-                  ))}
-                </div>
-                
-                <Separator />
-                
-                <div className="rounded-lg bg-primary/5 p-3 space-y-2">
-                  <div className="flex items-center">
-                    <StarHalf className="h-4 w-4 mr-2 text-primary" />
-                    <h3 className="text-sm font-medium">Pro Tips</h3>
-                  </div>
-                  <ul className="text-xs space-y-1 text-muted-foreground pl-6 list-disc">
-                    <li>For personalized advice, ask about specific stocks in your portfolio</li>
-                    <li>Provide context such as your investment timeline and risk tolerance</li>
-                    <li>Ask for explanations of complex financial concepts</li>
-                    <li>Request comparisons between different investment strategies</li>
-                  </ul>
-                </div>
+            <span>SuhuAI is in preview mode</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Sidebar (only shown when enabled) */}
+      {showSidebar && isSidebarOpen && (
+        <div className="fixed right-0 top-0 bottom-0 w-72 md:w-80 bg-background border-l shadow-lg z-10 p-4 overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-medium">Examples</h3>
+            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>
+              <PanelRightClose className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Try asking:
+              </p>
+              
+              <div className="space-y-2">
+                {[
+                  "Explain the concept of dollar-cost averaging for beginners",
+                  "What factors should I consider when building a diversified portfolio?",
+                  "How do rising interest rates affect the stock market?",
+                  "What are the key financial metrics to evaluate a growth stock?",
+                  "What is the difference between active and passive investing?",
+                ].map((prompt, i) => (
+                  <Button 
+                    key={i} 
+                    variant="outline" 
+                    className="w-full justify-start text-sm h-auto py-2 font-normal"
+                    onClick={() => {
+                      setInputMessage(prompt);
+                      if (textareaRef.current) {
+                        textareaRef.current.focus();
+                      }
+                      setIsSidebarOpen(false);
+                    }}
+                  >
+                    <MessageSquare className="h-3 w-3 mr-2 text-muted-foreground" />
+                    {prompt}
+                  </Button>
+                ))}
               </div>
-            </TabsContent>
+            </div>
             
-            <TabsContent value="features" className="flex-1 p-0 m-0">
-              <div className="p-4 space-y-4">
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium flex items-center">
-                    <Info className="h-4 w-4 mr-2 text-primary" />
-                    About Suhu AI
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Suhu AI is your intelligent financial advisor powered by Google's Gemini large language model. It provides personalized insights, market analysis, and investment guidance.
-                  </p>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium flex items-center">
-                    <Server className="h-4 w-4 mr-2 text-primary" />
-                    Capabilities
-                  </h3>
-                  <ul className="text-xs text-muted-foreground space-y-2">
-                    <li className="flex">
-                      <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center mr-2 shrink-0">
-                        <HelpCircle className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>Explains financial concepts and market mechanics</span>
-                    </li>
-                    <li className="flex">
-                      <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center mr-2 shrink-0">
-                        <ChevronDown className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>Helps analyze stocks and evaluate investment options</span>
-                    </li>
-                    <li className="flex">
-                      <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center mr-2 shrink-0">
-                        <ChevronUp className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>Provides personalized portfolio advice and risk assessment</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <Separator />
-                
-                <div className="rounded-lg bg-destructive/5 p-3 space-y-2">
-                  <div className="flex items-center">
-                    <Info className="h-4 w-4 mr-2 text-destructive" />
-                    <h3 className="text-sm font-medium">Limitations</h3>
-                  </div>
-                  <ul className="text-xs space-y-1 text-muted-foreground pl-6 list-disc">
-                    <li>Suhu AI is not a licensed financial advisor</li>
-                    <li>Information should not be considered financial advice</li>
-                    <li>Always conduct your own research before making investments</li>
-                    <li>Responses are based on generalized market knowledge</li>
-                  </ul>
-                </div>
+            <Separator />
+            
+            <div>
+              <div className="flex items-center mb-2">
+                <Server className="h-4 w-4 mr-2 text-primary" />
+                <h3 className="text-sm font-medium">Capabilities</h3>
               </div>
-            </TabsContent>
-          </Tabs>
+              <ul className="text-xs space-y-2 text-muted-foreground">
+                <li className="flex">
+                  <span className="mr-2">•</span>
+                  <span>Explains financial concepts and market mechanics</span>
+                </li>
+                <li className="flex">
+                  <span className="mr-2">•</span>
+                  <span>Helps analyze stocks and evaluate investment options</span>
+                </li>
+                <li className="flex">
+                  <span className="mr-2">•</span>
+                  <span>Provides portfolio insights and investment strategies</span>
+                </li>
+              </ul>
+            </div>
+            
+            <Separator />
+            
+            <div>
+              <div className="flex items-center mb-2">
+                <Info className="h-4 w-4 mr-2 text-destructive" />
+                <h3 className="text-sm font-medium">Limitations</h3>
+              </div>
+              <ul className="text-xs space-y-2 text-muted-foreground">
+                <li className="flex">
+                  <span className="mr-2">•</span>
+                  <span>Not a licensed financial advisor</span>
+                </li>
+                <li className="flex">
+                  <span className="mr-2">•</span>
+                  <span>Information should not be considered financial advice</span>
+                </li>
+                <li className="flex">
+                  <span className="mr-2">•</span>
+                  <span>Always do your own research before investing</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,10 +1,9 @@
 import React from 'react';
 import EnhancedSuhuAI from '@/components/EnhancedSuhuAI';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Info, AlertCircle } from 'lucide-react';
+import { AlertCircle, Bot } from 'lucide-react';
 
 const SuhuAI = () => {
   const { toast } = useToast();
@@ -15,58 +14,55 @@ const SuhuAI = () => {
   const handleRequestApiKey = () => {
     toast({
       title: 'API Key Required',
-      description: 'Please contact the administrator to set up the Gemini API key for the AI assistant.',
+      description: 'Please contact the administrator to set up the API key for the AI assistant.',
       variant: 'destructive',
     });
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] space-y-4">
-      {/* Info banner about API key */}
+    <div className="h-[calc(100vh-4rem)] flex flex-col">
+      {/* Simple header */}
+      <div className="border-b p-4 flex items-center justify-center shadow-sm bg-background">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <Bot className="h-5 w-5 text-primary" />
+          </div>
+          <h1 className="text-xl font-semibold">SuhuAI Chat</h1>
+        </div>
+      </div>
+
+      {/* API key alert - only shown when needed */}
       {!hasGeminiApiKey && (
-        <Card className="border-amber-200 bg-amber-500/10 dark:bg-amber-950/20 dark:border-amber-800">
-          <CardContent className="p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
-            <div>
-              <h3 className="font-medium text-amber-800 dark:text-amber-400 mb-1">
-                Gemini API Key Required
-              </h3>
-              <p className="text-sm text-amber-700 dark:text-amber-500 mb-2">
-                Suhu AI uses Google's Gemini AI model for intelligent responses. To enable this feature, 
-                a Gemini API key is required.
+        <div className="px-4 pt-4">
+          <Alert className="border-amber-200 bg-amber-500/10">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertTitle>API Key Required</AlertTitle>
+            <AlertDescription className="flex flex-col gap-2">
+              <p>
+                SuhuAI needs an API key to generate intelligent responses about stocks and financial information.
               </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-white dark:bg-amber-950 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-fit"
                 onClick={handleRequestApiKey}
               >
                 Request API Key
               </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </AlertDescription>
+          </Alert>
+        </div>
       )}
 
-      {/* Main Suhu AI component */}
-      <div className="flex-1">
-        <EnhancedSuhuAI className="h-full" />
+      {/* Main chat component */}
+      <div className="flex-1 overflow-hidden">
+        <EnhancedSuhuAI className="h-full" showSidebar={false} />
       </div>
       
-      {/* Information about limitations */}
-      <Card className="border-muted-foreground/20">
-        <CardContent className="p-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2 mb-1">
-            <Info className="h-4 w-4 text-muted-foreground/70" />
-            <span className="font-medium">Important note:</span>
-          </div>
-          <p>
-            Suhu AI is a financial assistant powered by AI. While it provides information and insights, 
-            it is not a substitute for professional financial advice. Always conduct your own research 
-            and consult with a qualified financial advisor before making investment decisions.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Minimal disclaimer at bottom */}
+      <div className="border-t p-2 text-xs text-center text-muted-foreground">
+        SuhuAI provides information only. Not financial advice. Always consult a professional advisor.
+      </div>
     </div>
   );
 };
