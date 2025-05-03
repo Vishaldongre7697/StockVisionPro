@@ -7,6 +7,144 @@ const STOCK_API_KEY = import.meta.env.VITE_STOCK_API_KEY || '';
 // Default API endpoint for Alpha Vantage - change this to your preferred provider
 const BASE_URL = 'https://www.alphavantage.co/query';
 
+// WebSocket for real-time data
+let socket: WebSocket | null = null;
+let isConnecting = false;
+const subscribers = new Map<string, Set<(data: any) => void>>();
+
+/**
+ * Initialize WebSocket connection
+ */
+const initializeWebSocket = () => {
+  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+    return Promise.resolve(socket);
+  }
+  
+  if (isConnecting) {
+    // Return a promise that resolves when the socket is connected
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          clearInterval(checkInterval);
+          resolve(socket);
+        }
+      }, 100);
+    });
+  }
+  
+  isConnecting = true;
+  
+  return new Promise((resolve, reject) => {
+    try {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      socket = new WebSocket(wsUrl);
+      
+      socket.onopen = () => {
+        console.log('WebSocket connected');
+        isConnecting = false;
+        resolve(socket);
+        
+        // Resubscribe to all symbols
+        Array.from(subscribers.keys()).forEach(symbol => {
+          subscribeToSymbol(symbol);
+        });
+      };
+      
+      socket.onclose = () => {
+        console.log('WebSocket disconnected');
+        socket = null;
+        isConnecting = false;
+        
+        // Attempt to reconnect after a delay
+        setTimeout(() => {
+          initializeWebSocket();
+        }, 5000);
+      };
+      
+      socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        isConnecting = false;
+        reject(error);
+      };
+      
+      socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          if (message.type === 'stock_update' && message.symbol) {
+            const callbacks = subscribers.get(message.symbol);
+            if (callbacks) {
+              Array.from(callbacks).forEach(callback => {
+                callback(message.data);
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing WebSocket:', error);
+      isConnecting = false;
+      reject(error);
+    }
+  });
+};
+
+/**
+ * Subscribe to real-time updates for a symbol
+ */
+export const subscribeToSymbol = async (symbol: string) => {
+  await initializeWebSocket();
+  
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      type: 'subscribe',
+      symbol
+    }));
+  }
+};
+
+/**
+ * Unsubscribe from real-time updates for a symbol
+ */
+export const unsubscribeFromSymbol = (symbol: string) => {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      type: 'unsubscribe',
+      symbol
+    }));
+  }
+};
+
+/**
+ * Register a callback for real-time updates for a symbol
+ */
+export const registerForUpdates = (symbol: string, callback: (data: any) => void) => {
+  if (!subscribers.has(symbol)) {
+    subscribers.set(symbol, new Set());
+    subscribeToSymbol(symbol);
+  }
+  
+  const callbacks = subscribers.get(symbol);
+  callbacks?.add(callback);
+  
+  // Return a function to unregister
+  return () => {
+    const callbacks = subscribers.get(symbol);
+    if (callbacks) {
+      callbacks.delete(callback);
+      
+      if (callbacks.size === 0) {
+        subscribers.delete(symbol);
+        unsubscribeFromSymbol(symbol);
+      }
+    }
+  };
+};
+
 /**
  * Get market summary - major indices
  */

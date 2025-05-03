@@ -1,6 +1,8 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import axios from "axios";
 import { 
   insertUserSchema, 
   insertWatchlistSchema, 
@@ -808,5 +810,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   const httpServer = createServer(app);
+  
+  // Initialize WebSocket server for real-time market data
+  const STOCK_API_KEY = process.env.VITE_STOCK_API_KEY || '';
+  const BASE_URL = 'https://www.alphavantage.co/query';
+  
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Store active connections and their subscriptions
+  const clients = new Map();
+  
+  wss.on('connection', (socket) => {
+    console.log('WebSocket client connected');
+    
+    // Add client to our map with empty subscriptions
+    const clientId = Date.now();
+    clients.set(clientId, {
+      socket,
+      subscriptions: new Set()
+    });
+    
+    // Handle subscription messages
+    socket.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        if (data.type === 'subscribe' && data.symbol) {
+          const client = clients.get(clientId);
+          if (client) {
+            client.subscriptions.add(data.symbol);
+            console.log(`Client ${clientId} subscribed to ${data.symbol}`);
+            
+            // Send initial data immediately
+            try {
+              const stockData = await fetchStockData(data.symbol);
+              socket.send(JSON.stringify({
+                type: 'stock_update',
+                symbol: data.symbol,
+                data: stockData
+              }));
+            } catch (error) {
+              console.error(`Error fetching initial data for ${data.symbol}:`, error);
+            }
+          }
+        } else if (data.type === 'unsubscribe' && data.symbol) {
+          const client = clients.get(clientId);
+          if (client && client.subscriptions.has(data.symbol)) {
+            client.subscriptions.delete(data.symbol);
+            console.log(`Client ${clientId} unsubscribed from ${data.symbol}`);
+          }
+        }
+      } catch (err) {
+        console.error('Invalid WebSocket message:', err);
+      }
+    });
+    
+    // Handle disconnection
+    socket.on('close', () => {
+      console.log(`WebSocket client ${clientId} disconnected`);
+      clients.delete(clientId);
+    });
+  });
+  
+  // Helper function to fetch stock data
+  async function fetchStockData(symbol: string) {
+    try {
+      if (!STOCK_API_KEY) {
+        throw new Error('API key missing');
+      }
+      
+      // Get quote data
+      const quoteRes = await axios.get(
+        `${BASE_URL}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${STOCK_API_KEY}`
+      );
+      
+      const quote = quoteRes.data['Global Quote'];
+      
+      return {
+        symbol: symbol,
+        price: parseFloat(quote['05. price']),
+        change: parseFloat(quote['09. change']),
+        changePercent: parseFloat(quote['10. change percent'].replace('%', '')),
+        volume: parseInt(quote['06. volume']),
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error(`Error fetching stock data for ${symbol}:`, error);
+      throw error;
+    }
+  }
+  
+  // Set up periodic updates for subscribed stocks
+  // Note: This is a simplified implementation that respects API rate limits
+  // In a production environment, you might want to use a more sophisticated approach
+  setInterval(async () => {
+    // Get all unique symbols that clients are subscribed to
+    const symbols = new Set<string>();
+    clients.forEach((client) => {
+      client.subscriptions.forEach((symbol: string) => {
+        symbols.add(symbol);
+      });
+    });
+    
+    // Fetch data for each symbol and broadcast to subscribed clients
+    Array.from(symbols).forEach(async (symbol) => {
+      try {
+        const stockData = await fetchStockData(symbol);
+        
+        // Broadcast to all clients subscribed to this symbol
+        clients.forEach((client, clientId) => {
+          if (client.subscriptions.has(symbol) && client.socket.readyState === WebSocket.OPEN) {
+            client.socket.send(JSON.stringify({
+              type: 'stock_update',
+              symbol,
+              data: stockData
+            }));
+          }
+        });
+      } catch (error) {
+        console.error(`Error updating stock data for ${symbol}:`, error);
+      }
+      
+      // Add a small delay between API calls to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    });
+  }, 60000); // Update every minute
+  
   return httpServer;
 }
