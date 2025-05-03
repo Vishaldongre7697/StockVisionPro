@@ -891,6 +891,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Chat Messages Routes
+  // Debug endpoint to check WebSocket server status
+  app.get("/api/websocket-status", (_req: Request, res: Response) => {
+    const status = {
+      active: true,
+      clients: clients.size,
+      subscriptions: Array.from(clients.values()).reduce((acc, client) => acc + client.subscriptions.size, 0),
+      serverTime: new Date().toISOString()
+    };
+    return res.json(status);
+  });
+
   app.get("/api/chat/:userId", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);

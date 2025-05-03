@@ -47,7 +47,16 @@ export default function useWebSocket(options: UseWebSocketOptions = {}) {
       const host = window.location.host;
       
       // For Replit environment, use the current host with /ws path
+      // Also handle potential subdomain hosts in Replit
       const wsUrl = `${protocol}//${host}/ws`;
+      
+      // Set a longer timeout for connection
+      const connectionTimeout = setTimeout(() => {
+        if (socketRef.current?.readyState !== WebSocket.OPEN) {
+          console.warn('WebSocket connection timeout, closing socket');
+          socketRef.current?.close();
+        }
+      }, 10000);
       
       // Log the connection attempt
       console.log(`Attempting WebSocket connection to: ${wsUrl}`);
@@ -55,10 +64,15 @@ export default function useWebSocket(options: UseWebSocketOptions = {}) {
       socketRef.current = socket;
       
       socket.onopen = () => {
+        clearTimeout(connectionTimeout);
         console.log('WebSocket connection established');
         setIsConnected(true);
         setIsConnecting(false);
         reconnectAttemptsRef.current = 0;
+        
+        // Send a ping immediately to test the connection
+        socket.send(JSON.stringify({ type: 'ping' }));
+        
         if (onOpen) onOpen();
       };
       
