@@ -27,6 +27,10 @@ interface StockAnalysisProps {
 
 const StockAnalysis = ({ stockSymbol = "RELIANCE" }: StockAnalysisProps) => {
   const [timeframe, setTimeframe] = useState<"1D" | "1W" | "1M" | "3M" | "1Y" | "All">("1D");
+  const [chartType, setChartType] = useState<"line" | "area" | "candlestick">("line");
+  
+  // Setup WebSocket connection
+  const { isConnected, registerHandler } = useWebSocketContext();
   
   const { data: stock, isLoading: isLoadingStock } = useQuery<Stock>({
     queryKey: [`/api/stocks/${stockSymbol}`],
@@ -111,9 +115,10 @@ const StockAnalysis = ({ stockSymbol = "RELIANCE" }: StockAnalysisProps) => {
                                 timeframe === "1W" ? "daily" : 
                                 timeframe === "1M" ? "daily" : 
                                 timeframe === "3M" ? "weekly" : "monthly"}
-                defaultChartType={isPositive ? "area" : "line"}
+                defaultChartType={chartType}
                 height={300}
               />
+            </div>
             <div className="flex justify-center mt-2">
               <div className="flex space-x-2 text-sm">
                 {["1D", "1W", "1M", "3M", "1Y", "All"].map((period) => (

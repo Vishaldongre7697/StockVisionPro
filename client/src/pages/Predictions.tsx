@@ -231,13 +231,19 @@ const Predictions = () => {
   };
   
   // Custom tooltip component for charts
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  interface CustomTooltipProps {
+    active?: boolean;
+    payload?: Array<{color: string; dataKey: string; name: string; payload: any; value: number;}> | undefined;
+    label?: string;
+  }
+
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card p-2 border border-border shadow-sm rounded-md text-xs">
           <p className="font-medium">{label || payload[0].payload.formattedDate}</p>
           
-          {payload.map((entry: any, index: number) => {
+          {payload.map((entry, index: number) => {
             if (entry.dataKey === "prediction" && !entry.value) return null;
             
             return (
@@ -264,6 +270,14 @@ const Predictions = () => {
     low: number;
     yMin: number;
     yMax: number;
+  }
+  
+  // Define type for scatter shape props
+  interface ScatterShapeProps {
+    cx: number;
+    cy: number;
+    width: number;
+    payload: any;
   }
 
   const CandleStick = (props: CandleStickProps) => {
@@ -572,7 +586,7 @@ const Predictions = () => {
                   <Scatter
                     yAxisId="price"
                     data={chartData}
-                    shape={(props) => {
+                    shape={(props: ScatterShapeProps) => {
                       const { cx, cy, width, payload } = props;
                       
                       // Calculate min/max for scaling
