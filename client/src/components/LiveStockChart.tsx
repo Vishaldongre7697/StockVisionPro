@@ -20,7 +20,7 @@ import {
   getHistoricalData, 
   getIntradayData
 } from '@/services/marketDataService';
-import useWebSocket from '@/hooks/useWebSocket';
+import { useWebSocketContext } from '@/lib/websocketContext';
 
 export interface LiveStockChartProps {
   symbol: string;
@@ -160,11 +160,8 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
     setLastUpdated(new Date());
   }, [timeframe]);
 
-  // Initialize WebSocket connection
-  const { isConnected, registerHandler } = useWebSocket({
-    onOpen: () => console.log(`WebSocket connection established for ${symbol} chart`),
-    onClose: () => console.log(`WebSocket connection closed for ${symbol} chart`)
-  });
+  // Get WebSocket connection from context
+  const { isConnected, registerHandler } = useWebSocketContext();
   
   // Initial data load and setup real-time updates
   useEffect(() => {

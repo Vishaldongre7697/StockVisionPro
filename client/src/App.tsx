@@ -13,6 +13,7 @@ import Register from "@/pages/Register";
 import StockChartDemo from "@/pages/StockChartDemo";
 import { AuthProvider } from "./lib/auth.tsx";
 import { ThemeProvider } from "./lib/themeContext";
+import { WebSocketProvider } from "./lib/websocketContext";
 import { Layout } from "@/components/Layout";
 
 // New pages based on the UI/UX specifications
@@ -82,8 +83,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <Router />
-          <Toaster />
+          <WebSocketProvider>
+            <Router />
+            <Toaster />
+          </WebSocketProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
