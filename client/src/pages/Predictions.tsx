@@ -272,13 +272,7 @@ const Predictions = () => {
     yMax: number;
   }
   
-  // Define type for scatter shape props
-  interface ScatterShapeProps {
-    cx: number;
-    cy: number;
-    width: number;
-    payload: any;
-  }
+  // Using default shape props from recharts
 
   const CandleStick = (props: CandleStickProps) => {
     const { x, y, width, height, open, close, high, low, yMin, yMax } = props;
@@ -586,7 +580,7 @@ const Predictions = () => {
                   <Scatter
                     yAxisId="price"
                     data={chartData}
-                    shape={(props: ScatterShapeProps) => {
+                    shape={(props: any) => {
                       const { cx, cy, width, payload } = props;
                       
                       // Calculate min/max for scaling
