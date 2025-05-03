@@ -324,7 +324,19 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
     
     if (chartType === 'candlestick') {
       // Custom candle rendering
-      const CandleStick = (props: any) => {
+      interface CandleStickProps {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        low: number;
+        high: number;
+        open: number;
+        close: number;
+        domain: [number, number];
+      }
+      
+      const CandleStick = (props: CandleStickProps) => {
         const { x, y, width, height, low, high, open, close } = props;
         const isIncreasing = close > open;
         const color = isIncreasing ? '#16a34a' : '#e11d48'; // Green for increasing, red for decreasing

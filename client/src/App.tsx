@@ -10,6 +10,7 @@ import AIInsights from "@/pages/AIInsights";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import StockChartDemo from "@/pages/StockChartDemo";
 import { AuthProvider } from "./lib/auth.tsx";
 import { ThemeProvider } from "./lib/themeContext";
 import { Layout } from "@/components/Layout";
@@ -61,6 +62,11 @@ function Router() {
       <Route path="/suhu-ai">
         <Layout title="SuhuAI Assistant" showBackButton>
           <SuhuAI />
+        </Layout>
+      </Route>
+      <Route path="/chart-demo">
+        <Layout title="Live Chart Demo" showBackButton>
+          <StockChartDemo />
         </Layout>
       </Route>
       

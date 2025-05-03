@@ -1,15 +1,16 @@
 import { Link, useLocation } from "wouter";
-import { Home, List, TrendingUp, Cpu, Settings, MessageCircle } from "lucide-react";
+import { Home, List, TrendingUp, Cpu, Settings, MessageCircle, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Navigation = () => {
   const [location] = useLocation();
 
   const navItems = [
-    { icon: Home, label: "Home", href: "/home" },
+    { icon: Home, label: "Home", href: "/" },
     { icon: List, label: "Watchlist", href: "/watchlist" },
     { icon: TrendingUp, label: "Predictions", href: "/predictions" },
     { icon: Cpu, label: "AI Insights", href: "/ai-insights" },
+    { icon: BarChart2, label: "Chart Demo", href: "/chart-demo" },
     { icon: Settings, label: "Settings", href: "/settings" }
   ];
 
