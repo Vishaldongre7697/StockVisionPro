@@ -398,7 +398,33 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
             <Scatter
               data={chartData}
               fill="#8884d8"
-              shape={<CandleStick />}
+              shape={(props) => {
+                // Extract the necessary properties for CandleStick
+                const {
+                  cx, cy, width, height, payload, index
+                } = props;
+                
+                // Get the data point
+                const dataPoint = payload as ChartDataPoint;
+                
+                // Calculate domain for the data point
+                const min = Math.min(...chartData.map(d => d.low));
+                const max = Math.max(...chartData.map(d => d.high));
+                
+                return (
+                  <CandleStick
+                    x={cx}
+                    y={cy}
+                    width={width || 10}
+                    height={height || 300}
+                    open={dataPoint.open}
+                    close={dataPoint.close}
+                    high={dataPoint.high}
+                    low={dataPoint.low}
+                    domain={[min, max]}
+                  />
+                );
+              }}
               line={false}
               lineType="joint"
               name="Price"
