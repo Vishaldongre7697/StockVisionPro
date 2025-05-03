@@ -1000,25 +1000,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const STOCK_API_KEY = process.env.VITE_STOCK_API_KEY || '';
   const BASE_URL = 'https://www.alphavantage.co/query';
   
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  const wss = new WebSocketServer({ 
+  server: httpServer, 
+  path: '/ws',
+  clientTracking: true 
+});
+
+// Log when WebSocket server is created
+console.log('WebSocket server initialized on path: /ws');
   
   // Store active connections and their subscriptions
   const clients = new Map();
   
   wss.on('connection', (socket) => {
-    console.log('WebSocket client connected');
-    
     // Add client to our map with empty subscriptions
-    const clientId = Date.now();
+    const clientId = Date.now().toString();
+    console.log(`WebSocket client [${clientId}] connected`);
+    
     clients.set(clientId, {
       socket,
       subscriptions: new Set()
     });
     
+    // Send immediate heartbeat to confirm connection
+    socket.send(JSON.stringify({
+      type: 'heartbeat',
+      timestamp: new Date().toISOString()
+    }));
+    
     // Handle subscription messages
     socket.on('message', async (message) => {
       try {
         const data = JSON.parse(message.toString());
+        console.log(`Received message from client ${clientId}:`, data);
         
         if (data.type === 'subscribe' && data.symbol) {
           const client = clients.get(clientId);
@@ -1034,6 +1048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 symbol: data.symbol,
                 data: stockData
               }));
+              console.log(`Sent initial data for ${data.symbol} to client ${clientId}`);
             } catch (error) {
               console.error(`Error fetching initial data for ${data.symbol}:`, error);
             }
@@ -1044,6 +1059,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             client.subscriptions.delete(data.symbol);
             console.log(`Client ${clientId} unsubscribed from ${data.symbol}`);
           }
+        } else if (data.type === 'ping') {
+          // Respond to ping with pong
+          socket.send(JSON.stringify({
+            type: 'pong',
+            timestamp: new Date().toISOString()
+          }));
+          console.log(`Sent pong response to client ${clientId}`);
         }
       } catch (err) {
         console.error('Invalid WebSocket message:', err);
@@ -1051,9 +1073,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     
     // Handle disconnection
-    socket.on('close', () => {
-      console.log(`WebSocket client ${clientId} disconnected`);
+    socket.on('close', (code, reason) => {
+      console.log(`WebSocket client ${clientId} disconnected: code=${code}, reason=${reason || 'No reason provided'}`);
       clients.delete(clientId);
+    });
+    
+    // Handle errors
+    socket.on('error', (error) => {
+      console.error(`WebSocket error for client ${clientId}:`, error);
     });
   });
   
