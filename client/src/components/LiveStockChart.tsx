@@ -18,10 +18,9 @@ import {
 import { cn } from '@/lib/utils';
 import { 
   getHistoricalData, 
-  getIntradayData, 
-  registerForUpdates, 
-  subscribeToSymbol 
+  getIntradayData
 } from '@/services/marketDataService';
+import useWebSocket from '@/hooks/useWebSocket';
 
 export interface LiveStockChartProps {
   symbol: string;
@@ -161,14 +160,23 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
     setLastUpdated(new Date());
   }, [timeframe]);
 
+  // Initialize WebSocket connection
+  const { isConnected, registerHandler } = useWebSocket({
+    onOpen: () => console.log(`WebSocket connection established for ${symbol} chart`),
+    onClose: () => console.log(`WebSocket connection closed for ${symbol} chart`)
+  });
+  
   // Initial data load and setup real-time updates
   useEffect(() => {
     // Fetch initial data
     fetchStockData();
     
-    // Subscribe to real-time updates
-    subscribeToSymbol(symbol);
-    const unsubscribe = registerForUpdates(symbol, updateRealTimeData);
+    // Register for real-time updates using our WebSocket hook if connected
+    let unsubscribe = () => {};
+    if (isConnected) {
+      unsubscribe = registerHandler(symbol, updateRealTimeData);
+      console.log(`Registered real-time updates for ${symbol}`);
+    }
     
     // Set up refresh interval for backup (if WebSocket fails)
     const intervalTime = timeframe === 'intraday' ? 30000 : 60000; // 30 sec for intraday, 1 min for others
@@ -180,7 +188,7 @@ Volume: ${(point.volume/1000).toFixed(0)}K`
       clearInterval(intervalId);
       unsubscribe();
     };
-  }, [fetchStockData, timeframe, symbol, updateRealTimeData]);
+  }, [fetchStockData, timeframe, symbol, updateRealTimeData, registerHandler, isConnected]);
   
   // Determine price change
   const getPriceChange = () => {
