@@ -426,10 +426,10 @@ const Predictions = () => {
                 )}
               </CardTitle>
               <CardDescription>
-                Current price: ₹{displayPrice?.toLocaleString('en-IN', {
+                Current price: ₹{displayPrice ? displayPrice.toLocaleString('en-IN', {
                   maximumFractionDigits: 2,
                   minimumFractionDigits: 2
-                }) || '0.00'}
+                }) : '0.00'}
                 {realTimePrice && (
                   <span className="text-xs text-muted-foreground ml-1">
                     (Updated: {lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})})
@@ -588,7 +588,8 @@ const Predictions = () => {
                   <Scatter
                     yAxisId="price"
                     data={chartData}
-                    shape={(props: ScatterShapeProps) => {
+                    shape={(props: any) => {
+                      const typedProps = props as ScatterShapeProps;
                       const { cx, cy, width, payload } = props;
                       
                       // Calculate min/max for scaling

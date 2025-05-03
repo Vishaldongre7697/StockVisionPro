@@ -69,16 +69,6 @@ const EnhancedSuhuAI = ({
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
     
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please log in to use Suhu AI',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
     // Check if API key is available
     if (!checkGeminiApiKey()) {
       return;
