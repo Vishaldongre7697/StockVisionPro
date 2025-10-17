@@ -39,8 +39,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Create HTTP server and register routes (including WebSocket server)
-  const server = await registerRoutes(app);
+  // Create HTTP server
+  const server = createServer(app);
+
+  // Register routes (including WebSocket server)
+  await registerRoutes(app, server);
 
   // Set up proxy to Python Flask backend
   const apiProxy = createProxyMiddleware({
@@ -72,11 +75,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  server.listen(port, () => {
     log(`serving on port ${port}`);
   });
 })();

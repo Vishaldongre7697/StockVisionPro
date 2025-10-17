@@ -46,9 +46,8 @@ export default function useWebSocket(options: UseWebSocketOptions = {}) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       
-      // For Replit environment, use the current host with /ws path
-      // Also handle potential subdomain hosts in Replit
-      const wsUrl = `${protocol}//${host}/ws`;
+  // Use the current host with /ws path
+  const wsUrl = `${protocol}//${host}/ws`;
       
       // Set a longer timeout for connection
       const connectionTimeout = setTimeout(() => {

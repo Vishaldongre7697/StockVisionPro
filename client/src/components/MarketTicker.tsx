@@ -36,7 +36,7 @@ const MarketTicker = () => {
         ))}
       </div>
 
-      <style jsx>{`
+      <style>{`
         .ticker {
           white-space: nowrap;
           overflow: hidden;

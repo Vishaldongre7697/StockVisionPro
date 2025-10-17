@@ -48,7 +48,7 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express, httpServer: Server): Promise<Server> {
   // User Authentication Routes
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
@@ -1005,17 +1005,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return `I understand you're asking about "${userMessage}". As your AI trading assistant, I'm continuously learning to provide better insights. Could you provide more details about what you'd like to know?`;
   }
 
-  const httpServer = createServer(app);
-  
   // Initialize WebSocket server for real-time market data
   const STOCK_API_KEY = process.env.VITE_STOCK_API_KEY || '';
   const BASE_URL = 'https://www.alphavantage.co/query';
   
-  const wss = new WebSocketServer({ 
-  server: httpServer, 
-  path: '/ws',
-  clientTracking: true 
-});
+  // Initialize WebSocket server with the provided HTTP server
+  const wss = new WebSocketServer({
+    server: httpServer,
+    path: '/ws',
+    perMessageDeflate: false // Disable compression for better performance
+  });
 
 // Log when WebSocket server is created
 console.log('WebSocket server initialized on path: /ws');

@@ -216,7 +216,11 @@ export class MemStorage implements IStorage {
       id,
       accountBalance: 10000, // Initial balance for virtual trading
       createdAt: new Date(),
-      lastLoginAt: new Date()
+      lastLoginAt: new Date(),
+      fullName: insertUser.fullName ?? null,
+      profileImage: insertUser.profileImage ?? null,
+      phoneNumber: insertUser.phoneNumber ?? null,
+      preferences: insertUser.preferences ?? null
     };
     this.users.set(id, user);
     return user;
@@ -288,9 +292,26 @@ export class MemStorage implements IStorage {
   async createStock(insertStock: InsertStock): Promise<Stock> {
     const id = this.stockIdCounter++;
     const stock: Stock = { 
-      ...insertStock, 
       id,
-      updatedAt: new Date() 
+      symbol: insertStock.symbol,
+      name: insertStock.name,
+      exchange: insertStock.exchange,
+      currentPrice: insertStock.currentPrice,
+      previousClose: insertStock.previousClose,
+      updatedAt: new Date(),
+      change: insertStock.change ?? null,
+      changePercent: insertStock.changePercent ?? null,
+      volume: insertStock.volume ?? null,
+      marketCap: insertStock.marketCap ?? null,
+      sector: insertStock.sector ?? null,
+      high52Week: insertStock.high52Week ?? null,
+      low52Week: insertStock.low52Week ?? null,
+      eps: insertStock.eps ?? null,
+      pe: insertStock.pe ?? null,
+      dividend: insertStock.dividend ?? null,
+      beta: insertStock.beta ?? null,
+      description: insertStock.description ?? null,
+      dividendYield: insertStock.dividendYield ?? null
     };
     this.stocks.set(id, stock);
     return stock;
@@ -484,7 +505,11 @@ export class MemStorage implements IStorage {
   async getUserStrategies(userId: number): Promise<TradingStrategy[]> {
     return Array.from(this.tradingStrategies.values())
       .filter(strategy => strategy.userId === userId)
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      });
   }
   
   async createStrategy(strategy: InsertTradingStrategy): Promise<TradingStrategy> {
@@ -494,7 +519,10 @@ export class MemStorage implements IStorage {
       ...strategy,
       id,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      description: strategy.description || null,
+      isActive: strategy.isActive || null,
+      backtestResults: strategy.backtestResults || null
     };
     this.tradingStrategies.set(id, tradingStrategy);
     return tradingStrategy;
@@ -545,7 +573,11 @@ export class MemStorage implements IStorage {
   async getUserTransactions(userId: number, limit?: number): Promise<Transaction[]> {
     const userTransactions = Array.from(this.transactions.values())
       .filter(transaction => transaction.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
     
     return limit ? userTransactions.slice(0, limit) : userTransactions;
   }
@@ -556,7 +588,8 @@ export class MemStorage implements IStorage {
       ...transaction,
       id,
       createdAt: new Date(),
-      completedAt: null
+      completedAt: null,
+      strategyId: transaction.strategyId || null
     };
     this.transactions.set(id, newTransaction);
     return newTransaction;
@@ -579,7 +612,11 @@ export class MemStorage implements IStorage {
   async getTransactionsByStrategy(strategyId: number): Promise<Transaction[]> {
     return Array.from(this.transactions.values())
       .filter(transaction => transaction.strategyId === strategyId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
   }
   
   async getTransactionsByStock(stockId: number, userId?: number): Promise<Transaction[]> {
@@ -590,7 +627,11 @@ export class MemStorage implements IStorage {
       transactions = transactions.filter(transaction => transaction.userId === userId);
     }
     
-    return transactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return transactions.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
   }
 
   // Portfolio operations
@@ -695,7 +736,12 @@ export class MemStorage implements IStorage {
       ...insertSuggestion, 
       id, 
       createdAt: now,
-      expiresAt
+      expiresAt,
+      targetPrice: insertSuggestion.targetPrice || null,
+      stopLoss: insertSuggestion.stopLoss || null,
+      confidence: insertSuggestion.confidence || null,
+      rationale: insertSuggestion.rationale || null,
+      timeframe: insertSuggestion.timeframe || null
     };
     this.aiSuggestions.set(id, suggestion);
     return suggestion;
@@ -730,7 +776,11 @@ export class MemStorage implements IStorage {
       notifications = notifications.filter(notification => !notification.isRead);
     }
     
-    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    notifications.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
     
     return limit ? notifications.slice(0, limit) : notifications;
   }
@@ -740,7 +790,10 @@ export class MemStorage implements IStorage {
     const newNotification: Notification = {
       ...notification,
       id,
-      createdAt: new Date()
+      createdAt: new Date(),
+      isRead: notification.isRead || null,
+      relatedEntityType: notification.relatedEntityType || null,
+      relatedEntityId: notification.relatedEntityId || null
     };
     this.notifications.set(id, newNotification);
     return newNotification;
@@ -780,7 +833,11 @@ export class MemStorage implements IStorage {
   async getChatMessages(userId: number, limit?: number): Promise<ChatMessage[]> {
     const messages = Array.from(this.chatMessages.values())
       .filter(message => message.userId === userId)
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateA - dateB;
+      });
       
     return limit ? messages.slice(0, limit) : messages;
   }
@@ -790,7 +847,8 @@ export class MemStorage implements IStorage {
     const message: ChatMessage = {
       ...chatMessage,
       id,
-      createdAt: new Date()
+      createdAt: new Date(),
+      context: chatMessage.context || null
     };
     this.chatMessages.set(id, message);
     return message;

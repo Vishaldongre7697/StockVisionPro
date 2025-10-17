@@ -191,7 +191,7 @@ const AIInsights = () => {
                       <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="name" />
                       <YAxis tickFormatter={(value) => `${value.toFixed(2)}%`} />
-                      <Tooltip formatter={(value) => [`${value.toFixed(2)}%`, 'Performance']} />
+                      <Tooltip formatter={(value: number) => [`${value.toFixed(2)}%`, 'Performance']} />
                       <Line 
                         type="monotone" 
                         dataKey="performance" 

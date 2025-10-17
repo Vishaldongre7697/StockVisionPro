@@ -100,7 +100,8 @@ export const useChat = (
         }));
         
         // Get response from OpenAI
-        response = await getFinancialAdvice(messageText, chatHistory);
+        const aiResponse = await getFinancialAdvice(messageText, chatHistory);
+        response = aiResponse || '';
       } catch (openaiError) {
         console.warn('OpenAI fallback error:', openaiError);
         // Fall back to Gemini if OpenAI fails
